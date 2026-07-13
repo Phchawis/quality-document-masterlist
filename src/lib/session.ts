@@ -42,7 +42,9 @@ export async function createSessionCookie(payload: SessionPayload): Promise<void
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: MAX_AGE,
+    // No maxAge: this is a browser-session cookie, cleared when the browser
+    // fully closes. The JWT's own 12h expiration (below) is the backstop for
+    // browsers/tabs left open.
   });
 }
 
