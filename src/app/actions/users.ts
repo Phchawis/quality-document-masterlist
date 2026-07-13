@@ -50,14 +50,19 @@ export async function updateUser(userId: string, formData: FormData): Promise<Us
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "เฉพาะผู้ดูแลระบบเท่านั้น" };
 
+  const username = String(formData.get("username") || "").trim().toLowerCase();
   const fullName = String(formData.get("fullName") || "").trim();
   const role = String(formData.get("role") || "");
   const workId = String(formData.get("workId") || "") || null;
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) return { ok: false, error: "ชื่อผู้ใช้ต้องเป็น a-z 0-9 . _ - ความยาว 3–32 ตัว" };
   if (!fullName) return { ok: false, error: "กรุณาระบุชื่อ-นามสกุล" };
   if (!validRole(role)) return { ok: false, error: "บทบาทไม่ถูกต้อง" };
 
-  await prisma.user.update({ where: { id: userId }, data: { fullName, role, workId } });
-  await prisma.auditLog.create({ data: { userId: admin.id, userName: admin.fullName, action: "UPDATE_USER", detail: `แก้ไขผู้ใช้ ${userId}` } });
+  const existing = await prisma.user.findUnique({ where: { username } });
+  if (existing && existing.id !== userId) return { ok: false, error: "มีชื่อผู้ใช้นี้อยู่แล้ว" };
+
+  await prisma.user.update({ where: { id: userId }, data: { username, fullName, role, workId } });
+  await prisma.auditLog.create({ data: { userId: admin.id, userName: admin.fullName, action: "UPDATE_USER", detail: `แก้ไขผู้ใช้ ${userId} (username: ${username})` } });
   revalidatePath("/admin/users");
   return { ok: true };
 }

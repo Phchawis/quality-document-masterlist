@@ -137,6 +137,7 @@ export default function UserManager({ users }: { users: UserRow[] }) {
           </>}>
           <form id="user-edit" action={(fd) => submitEdit(modal.edit, fd)} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <label style={fieldLabel}>ชื่อ-นามสกุล<input name="fullName" defaultValue={modal.edit.fullName} style={fieldInput} /></label>
+            <label style={fieldLabel}>ชื่อผู้ใช้ (username)<input name="username" defaultValue={modal.edit.username} style={fieldInput} /></label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 180px" }}>บทบาท
                 <select name="role" defaultValue={modal.edit.role} style={fieldSelect}>
