@@ -53,11 +53,28 @@ services:
       DATABASE_URL: postgresql://masterlist:${DB_PASSWORD:-masterlist_prod}@db:5432/masterlist
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
       UPLOAD_DIR: /app/uploads
-    ports:
-      - "3000:3000"
     volumes:
       - uploads:/app/uploads
+
+  # Reverse proxy with automatic HTTPS (Let's Encrypt) via Caddy.
+  # Set SITE_DOMAIN in .env to your public hostname (e.g. example.duckdns.org).
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN in .env, e.g. example.duckdns.org}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   pgdata:
   uploads:
+  caddy_data:
+  caddy_config:
