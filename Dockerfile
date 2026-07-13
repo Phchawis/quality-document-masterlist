@@ -3,8 +3,7 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-COPY src/generated ./src/generated
-# postinstall runs `prisma generate`
+# postinstall runs `prisma generate`, which creates src/generated/prisma
 RUN npm ci
 
 # ---------- builder ----------
