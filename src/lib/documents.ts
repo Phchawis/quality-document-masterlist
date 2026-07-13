@@ -26,14 +26,6 @@ export async function getDocumentByCode(code: string) {
   return prisma.document.findUnique({ where: { code }, include: DOC_INCLUDE });
 }
 
-// Build the next running code for a given prefix + type.
-export async function nextCode(prefix: string, typeCode: string): Promise<{ code: string; running: number }> {
-  const like = `${prefix}-${typeCode}-`;
-  const count = await prisma.document.count({ where: { code: { startsWith: like } } });
-  const running = count + 1;
-  return { code: `${like}${String(running).padStart(3, "0")}`, running };
-}
-
 export type MasterlistParams = { [k: string]: string | undefined };
 
 // Shared filter → Prisma where builder, used by both the masterlist page and

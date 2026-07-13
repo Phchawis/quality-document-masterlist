@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { can, WORKS } from "@/lib/reference";
-import { nextCode } from "@/lib/documents";
+import { can, WORKS, KIND_META } from "@/lib/reference";
 import { saveUpload, deleteStored } from "@/lib/storage";
 import type { AttachmentKind } from "@/generated/prisma/enums";
+
+const RETENTION_YEARS = [2, 5, 10];
 
 async function log(userId: string, userName: string, action: string, documentId: string | null, detail: string) {
   await prisma.auditLog.create({ data: { userId, userName, action, documentId, detail } });
@@ -24,15 +25,21 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
   const workId = String(formData.get("work") || "");
   const typeCode = String(formData.get("type") || "");
   const catRaw = String(formData.get("cat") || "");
-  const kind = String(formData.get("kind") || "pdf").toUpperCase() as AttachmentKind;
+  const code = String(formData.get("code") || "").trim().toUpperCase();
+  const kinds = formData.getAll("kinds").map((k) => String(k).toUpperCase()) as AttachmentKind[];
+  const retentionYears = parseInt(String(formData.get("retentionYears") || "2"), 10);
 
   if (!title) return { ok: false, error: "กรุณาระบุชื่อเอกสาร" };
+  if (!code) return { ok: false, error: "กรุณาระบุรหัสเอกสาร" };
+  if (!/^[A-Z0-9-]+$/.test(code)) return { ok: false, error: "รหัสเอกสารใช้ได้เฉพาะตัวอักษร A-Z, 0-9 และ -" };
   const work = WORKS.find((w) => w.id === workId);
   if (!work) return { ok: false, error: "งานไม่ถูกต้อง" };
+  if (kinds.length === 0) return { ok: false, error: "กรุณาเลือกรูปแบบไฟล์แนบอย่างน้อย 1 แบบ" };
+  if (!RETENTION_YEARS.includes(retentionYears)) return { ok: false, error: "ระยะเวลาจัดเก็บไม่ถูกต้อง" };
   const categoryCode = workId === "MEDTECH" ? catRaw || null : null;
 
-  const prefix = workId === "MEDTECH" ? categoryCode ?? work.code : work.code;
-  const { code, running } = await nextCode(prefix, typeCode);
+  const codeExists = await prisma.document.findUnique({ where: { code } });
+  if (codeExists) return { ok: false, error: `รหัสเอกสาร ${code} มีอยู่แล้ว` };
 
   const typeMeta = await prisma.docType.findUnique({ where: { code: typeCode } });
   const now = new Date();
@@ -40,7 +47,7 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
   const doc = await prisma.document.create({
     data: {
       code,
-      running,
+      running: 1,
       title,
       typeCode,
       workId,
@@ -49,17 +56,17 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
       version: 1,
       description: "เอกสารลงทะเบียนใหม่ · รอตรวจสอบและประกาศใช้",
       controlled: typeMeta?.controlled ?? true,
-      nextReviewAt: new Date(now.getTime() + 730 * 86400000),
+      nextReviewAt: new Date(now.getTime() + retentionYears * 365 * 86400000),
       ownerId: user.id,
       ownerName: user.fullName,
       approverName: "",
       revisions: { create: { version: 1, byId: user.id, byName: user.fullName, note: "ลงทะเบียนเอกสารครั้งแรก" } },
       attachments: {
-        create: {
+        create: kinds.map((kind) => ({
           kind,
-          filename: kind === "URL" ? `${code} · ระบบสารสนเทศ` : `${code}`,
+          filename: kind === "URL" ? `${code} · ระบบสารสนเทศ` : `${code}.${KIND_META[kind].ext}`,
           note: "รายการเริ่มต้น · แนบไฟล์จริงได้ในหน้ารายละเอียด",
-        },
+        })),
       },
     },
   });

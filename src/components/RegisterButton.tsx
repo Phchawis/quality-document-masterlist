@@ -49,6 +49,10 @@ export default function RegisterButton() {
               ชื่อเอกสาร
               <input name="title" placeholder="เช่น การตรวจ…" style={fieldInput} />
             </label>
+            <label style={fieldLabel}>
+              รหัสเอกสาร
+              <input name="code" placeholder="เช่น HEM-WI-006" style={{ ...fieldInput, fontFamily: "var(--mono)", textTransform: "uppercase" }} />
+            </label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
                 งาน
@@ -79,18 +83,30 @@ export default function RegisterButton() {
                 </select>
               </label>
               <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
-                รูปแบบไฟล์แนบ
-                <select name="kind" defaultValue="pdf" style={fieldSelect}>
-                  <option value="pdf">PDF · เปิดดู</option>
-                  <option value="word">Word · แก้ไข</option>
-                  <option value="excel">Excel · แก้ไข</option>
-                  <option value="url">URL · แนบลิงก์</option>
+                ระยะเวลาจัดเก็บ/ทบทวน
+                <select name="retentionYears" defaultValue="2" style={fieldSelect}>
+                  <option value="2">2 ปี</option>
+                  <option value="5">5 ปี</option>
+                  <option value="10">10 ปี</option>
                 </select>
               </label>
             </div>
-            <p style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--faint)", margin: 0, lineHeight: 1.7 }}>
-              PDF · เปิดดู &nbsp;/&nbsp; Word · Excel · แก้ไข &nbsp;/&nbsp; URL · แนบลิงก์แอปและ E-Doc
-            </p>
+            <div>
+              <span style={fieldLabel}>รูปแบบไฟล์แนบ (เลือกได้หลายแบบ)</span>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8 }}>
+                {[
+                  { v: "pdf", label: "PDF · เปิดดู" },
+                  { v: "word", label: "Word · แก้ไข" },
+                  { v: "excel", label: "Excel · แก้ไข" },
+                  { v: "url", label: "URL · แนบลิงก์" },
+                ].map((k) => (
+                  <label key={k.v} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--text)" }}>
+                    <input type="checkbox" name="kinds" value={k.v} defaultChecked={k.v === "pdf"} />
+                    {k.label}
+                  </label>
+                ))}
+              </div>
+            </div>
             {error && <div role="alert" style={{ fontSize: 13.5, color: "var(--red)" }}>{error}</div>}
           </form>
         </Modal>
