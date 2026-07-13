@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_META, ROLE_ORDER } from "@/lib/reference";
 import type { Perm } from "@/lib/reference";
+import { RegisterTutorial, UploadTutorial } from "@/components/GuideTutorials";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export default async function GuidePage() {
       <div style={{ paddingBottom: 26, borderBottom: "1px solid var(--line2)" }}>
         <div style={{ fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".24em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12 }}>User Guide</div>
         <h1 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "clamp(1.8rem,3.8vw,2.8rem)", letterSpacing: "-.02em", lineHeight: 1, margin: 0 }}>คู่มือการใช้งาน</h1>
-        <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ขั้นตอนการใช้งานระบบทะเบียนเอกสารคุณภาพ สิทธิ์การดำเนินการของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
+        <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
       </div>
 
       <section style={{ marginTop: 36 }}>
@@ -53,6 +54,9 @@ export default async function GuidePage() {
           ))}
         </div>
       </section>
+
+      <RegisterTutorial />
+      <UploadTutorial />
 
       <section style={{ marginTop: 44 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 6 }}>
