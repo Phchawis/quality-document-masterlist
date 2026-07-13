@@ -124,6 +124,25 @@ export async function publishDocument(documentId: string): Promise<ActionResult>
   return { ok: true, documentId };
 }
 
+// ---------- Delete (draft only, never acknowledged — fixes registration mistakes) ----------
+export async function deleteDocument(documentId: string): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลบเอกสาร" };
+  const doc = await prisma.document.findUnique({ where: { id: documentId }, include: { attachments: true, acks: true } });
+  if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
+  if (doc.status !== "DRAFT") return { ok: false, error: "ลบได้เฉพาะเอกสารสถานะฉบับร่างเท่านั้น (เอกสารที่เคยประกาศใช้ให้ใช้ปุ่มยกเลิกการใช้งานแทน)" };
+  if (doc.acks.length > 0) return { ok: false, error: "มีผู้รับทราบเอกสารนี้แล้ว ไม่สามารถลบได้" };
+
+  for (const att of doc.attachments) {
+    if (att.storedName) await deleteStored(att.storedName);
+  }
+  await prisma.document.delete({ where: { id: documentId } });
+  await log(user.id, user.fullName, "DELETE_DOC", null, `ลบเอกสาร ${doc.code} · ${doc.title}`);
+  revalidatePath("/masterlist");
+  revalidatePath("/");
+  redirect("/masterlist");
+}
+
 // ---------- Cancel ----------
 export async function cancelDocument(documentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();

@@ -110,6 +110,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         showPublish={(doc.status === "DRAFT" || doc.status === "REVIEW") && can(user.role, "publish")}
         showRevise={can(user.role, "revise") && doc.status !== "OBSOLETE"}
         showCancel={can(user.role, "register") && doc.status !== "OBSOLETE"}
+        showDelete={can(user.role, "register") && doc.status === "DRAFT" && ackDoneCount === 0}
       />
 
       {/* timeline */}

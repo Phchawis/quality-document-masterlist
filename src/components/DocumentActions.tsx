@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Modal, { fieldLabel, fieldInput, btnPrimary, btnGhostModal, btnDangerSolid } from "./Modal";
-import { acknowledgeDocument, publishDocument, reviseDocument, cancelDocument } from "@/app/actions/documents";
+import { acknowledgeDocument, publishDocument, reviseDocument, cancelDocument, deleteDocument } from "@/app/actions/documents";
 
 type Props = {
   documentId: string;
@@ -17,6 +17,7 @@ type Props = {
   showPublish: boolean;
   showRevise: boolean;
   showCancel: boolean;
+  showDelete: boolean;
 };
 
 const btnGhost: React.CSSProperties = {
@@ -36,7 +37,7 @@ const btnDanger: React.CSSProperties = { ...btnGhost, border: "1px solid rgba(21
 export default function DocumentActions(p: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [modal, setModal] = useState<null | "revise" | "cancel">(null);
+  const [modal, setModal] = useState<null | "revise" | "cancel" | "delete">(null);
   const [note, setNote] = useState("");
 
   const run = (fn: () => Promise<unknown>) => start(async () => { await fn(); setModal(null); router.refresh(); });
@@ -69,6 +70,11 @@ export default function DocumentActions(p: Props) {
       {p.showCancel && (
         <button type="button" onClick={() => setModal("cancel")} style={btnDanger}>
           ยกเลิกการใช้งาน
+        </button>
+      )}
+      {p.showDelete && (
+        <button type="button" onClick={() => setModal("delete")} style={btnDanger}>
+          ลบเอกสาร (ลงผิด)
         </button>
       )}
 
@@ -116,6 +122,30 @@ export default function DocumentActions(p: Props) {
               ยืนยันการยกเลิกการใช้งานเอกสาร <span style={{ fontFamily: "var(--mono)", color: "var(--text)" }}>{p.code}</span> — เอกสารจะถูกเปลี่ยนสถานะเป็น “ยกเลิกใช้” และไม่นับเป็นฉบับที่ใช้งาน
             </p>
             <div style={{ fontSize: 14, color: "var(--muted)" }}>{p.title}</div>
+          </div>
+        </Modal>
+      )}
+
+      {modal === "delete" && (
+        <Modal
+          kicker="ลบเอกสาร"
+          title="ลบเอกสารที่ลงทะเบียนผิด"
+          onClose={() => !pending && setModal(null)}
+          footer={
+            <>
+              <button type="button" onClick={() => setModal(null)} style={btnGhostModal}>ยกเลิก</button>
+              <button type="button" disabled={pending} onClick={() => run(() => deleteDocument(p.documentId))} style={{ ...btnDangerSolid, opacity: pending ? 0.7 : 1 }}>
+                ยืนยันลบถาวร
+              </button>
+            </>
+          }
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p style={{ fontSize: 15.5, color: "var(--sub)", margin: 0, lineHeight: 1.75 }}>
+              ยืนยันการลบเอกสาร <span style={{ fontFamily: "var(--mono)", color: "var(--text)" }}>{p.code}</span> ออกจากระบบ<b style={{ color: "var(--red)" }}>ถาวร</b> — รวมไฟล์แนบและประวัติทั้งหมดของเอกสารนี้ กู้คืนไม่ได้
+            </p>
+            <div style={{ fontSize: 14, color: "var(--muted)" }}>{p.title}</div>
+            <p style={{ fontSize: 12.5, color: "var(--faint)", margin: 0 }}>ใช้ได้เฉพาะเอกสารสถานะฉบับร่างที่ยังไม่มีผู้รับทราบเท่านั้น</p>
           </div>
         </Modal>
       )}
