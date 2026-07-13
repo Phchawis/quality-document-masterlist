@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ทะเบียนเอกสารคุณภาพ · Quality Document Masterlist
 
-## Getting Started
+ระบบทะเบียนควบคุมเอกสารคุณภาพห้องปฏิบัติการ ฝ่ายสหเวชศาสตร์ โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ
+ตามมาตรฐาน ISO 15189:2022
 
-First, run the development server:
+สร้างจาก prototype (Claude Design) → ระบบจริงพร้อมต่อ Database และ hosting
+
+## สถาปัตยกรรม (Tech stack)
+
+| ส่วน | เทคโนโลยี |
+|------|-----------|
+| Framework | Next.js 16 (App Router, React 19, Server Actions) |
+| Database | PostgreSQL 17 + Prisma ORM 7 |
+| Auth | Username + รหัสผ่าน (bcrypt) · session JWT (jose) ใน httpOnly cookie |
+| ไฟล์แนบ | เก็บในระบบเอง (ดิสก์/volume) + เสิร์ฟผ่าน API ที่ตรวจสิทธิ์ |
+| UI | ธีมมืด/ครีม, ฟอนต์ Sarabun/Anuphan, responsive |
+
+## ความสามารถ
+
+- เข้าสู่ระบบด้วยบัญชีจริง · 6 บทบาท พร้อม permission matrix (ดู/รับทราบ/แนบไฟล์/ลงทะเบียน/แก้ไข/ประกาศใช้/อนุมัติ/จัดการระบบ)
+- ภาพรวม (dashboard): สถิติ, สัดส่วนสถานะ, ประกาศใช้ตามปี, รอรับทราบ, ประกาศใช้ล่าสุด
+- ทะเบียนเอกสาร: ค้นหา, กรอง (งาน/ประเภท/หมวด/หมวดย่อย/สถานะ), เรียงลำดับ, แบ่งหน้า
+- รายละเอียดเอกสาร: วงจรเอกสาร, ไฟล์แนบ (PDF/Word/Excel/URL), ประวัติการแก้ไข, ความคืบหน้าการรับทราบ
+- การดำเนินการ: ลงทะเบียน · บันทึกแก้ไข (เพิ่มเวอร์ชัน) · ประกาศใช้ · ยกเลิกใช้ · รับทราบ · แนบไฟล์/ลิงก์
+- จัดการผู้ใช้ (เฉพาะผู้ดูแลระบบ): เพิ่มบัญชี, กำหนดบทบาท/งานสังกัด, ตั้งรหัสผ่าน, เปิด/ปิดใช้งาน
+- บันทึกการตรวจสอบ (audit log): หน้า `/admin/audit` ดูประวัติการกระทำทั้งหมด กรองตามชนิดได้ (ISO 15189 traceability)
+- ส่งออกทะเบียนเป็น Excel (CSV UTF-8): ปุ่ม "ส่งออก Excel" ในหน้าทะเบียน ส่งออกตามตัวกรองปัจจุบัน
+- บัญชีของฉัน (`/account`): ผู้ใช้เปลี่ยนรหัสผ่านตนเองได้ (ยืนยันรหัสผ่านเดิม)
+
+## รันบนเครื่อง (Local development)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. ฐานข้อมูล PostgreSQL (ตัวอย่างใช้ Docker)
+docker run -d --name masterlist-db \
+  -e POSTGRES_USER=masterlist -e POSTGRES_PASSWORD=masterlist_dev \
+  -e POSTGRES_DB=masterlist -p 5433:5432 postgres:17-alpine
+
+# 2. ตั้งค่า env
+cp .env.example .env      # แล้วแก้ DATABASE_URL, SESSION_SECRET
+
+# 3. ติดตั้ง + สร้างตาราง + seed
+npm install
+npx prisma migrate deploy
+npm run db:seed           # SEED_DEMO=1 จะใส่เอกสารตัวอย่าง 105 ฉบับ
+
+# 4. รัน
+npm run dev               # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+บัญชีเริ่มต้นหลัง seed:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| บัญชี | รหัสผ่าน | บทบาท |
+|-------|----------|-------|
+| `admin` | `admin1234` | ผู้ดูแลระบบ |
+| `head.work` | `demo1234` | หัวหน้างาน |
+| `head.cat` | `demo1234` | หัวหน้าหมวดงาน |
+| `medtech` | `demo1234` | นักเทคนิคการแพทย์ |
+| `assistant` | `demo1234` | ผู้ช่วยนักเทคนิคการแพทย์ |
+| `admin.staff` | `demo1234` | เจ้าหน้าที่ธุรการ |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> ⚠️ เปลี่ยนรหัสผ่านทั้งหมดก่อนใช้งานจริง และตั้ง `SEED_DEMO=0` สำหรับฐานข้อมูลจริง
 
-## Learn More
+## Deploy — ดูรายละเอียดที่ [DEPLOY.md](./DEPLOY.md)
 
-To learn more about Next.js, take a look at the following resources:
+- **On-premise (เซิร์ฟเวอร์ รพ.)**: `docker compose up -d --build`
+- **Cloud**: Vercel + Postgres แบบ managed (Neon/Supabase) + object storage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## โครงสร้างโค้ด
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+prisma/
+  schema.prisma         # โครงสร้างฐานข้อมูล
+  seed.ts, seed-docs.ts # ข้อมูลอ้างอิง + เอกสารตัวอย่าง
+src/
+  app/
+    login/              # หน้าเข้าสู่ระบบ
+    (app)/              # ส่วนที่ต้องเข้าสู่ระบบ (dashboard, masterlist, documents, guide, admin)
+    actions/            # Server Actions (auth, documents, users)
+    api/files/[id]/     # เสิร์ฟไฟล์แนบแบบตรวจสิทธิ์
+  components/           # Header, Modal, filters, ตัวจัดการเอกสาร/ผู้ใช้
+  lib/                  # db, auth, session, reference (ข้อมูลอ้างอิง), storage, documents
+  proxy.ts             # ป้องกันเส้นทาง (redirect ไป /login ถ้ายังไม่เข้าสู่ระบบ)
+```

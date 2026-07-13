@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (never commit real secrets — .env.example is a safe template)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# local file storage for uploaded attachments (never commit real documents)
+/uploads

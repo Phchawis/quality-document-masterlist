@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Users & roles ----------
+
+enum Role {
+  SYSADMIN // ผู้ดูแลระบบ
+  HEAD_WORK // หัวหน้างาน
+  HEAD_CAT // หัวหน้าหมวดงาน
+  MED_TECH // นักเทคนิคการแพทย์
+  ASSISTANT // ผู้ช่วยนักเทคนิคการแพทย์
+  ADMIN_STAFF // เจ้าหน้าที่ธุรการ
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  fullName     String
+  role         Role
+  workId       String? // สังกัดงาน (ใช้กำหนดขอบเขตการรับทราบ)
+  work         Work?    @relation(fields: [workId], references: [id])
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  documentsOwned Document[]        @relation("DocOwner")
+  revisions      Revision[]
+  acks           Acknowledgement[]
+  attachments    Attachment[]
+  auditLogs      AuditLog[]
+}
+
+// ---------- Reference data ----------
+
+model Work {
+  id     String @id // MEDTECH | TRANSFUSION | MICRO
+  code   String @unique // MT | TRF | MCB
+  nameTh String
+  nameEn String
+  order  Int    @default(0)
+
+  documents Document[]
+  users     User[]
+}
+
+model Category {
+  code   String @id // OUT HEM MIC CHE IMM OPD THAMC POCT CMTL ADS
+  nameTh String
+  order  Int    @default(0)
+
+  subs      SubCategory[]
+  documents Document[]
+}
+
+model SubCategory {
+  id           String   @id @default(cuid())
+  categoryCode String
+  category     Category @relation(fields: [categoryCode], references: [code])
+  name         String
+  order        Int      @default(0)
+
+  documents Document[]
+
+  @@unique([categoryCode, name])
+}
+
+model DocType {
+  code        String  @id // QM SP WI WS FM EF ED SD RF
+  nameTh      String
+  nameEn      String
+  requiresAck Boolean @default(false) // QM SP WI ต้องลงนามรับทราบ
+  controlled  Boolean @default(true) // SD RF = ไม่ควบคุม
+  order       Int     @default(0)
+
+  documents Document[]
+}
+
+// ---------- Documents ----------
+
+enum DocStatus {
+  DRAFT // ฉบับร่าง
+  REVIEW // ระหว่างทบทวน
+  ACTIVE // ประกาศใช้
+  OBSOLETE // ยกเลิกใช้
+}
+
+model Document {
+  id            String       @id @default(cuid())
+  code          String       @unique // เช่น HEM-WI-001
+  running       Int // เลขลำดับใน prefix เดียวกัน
+  title         String
+  typeCode      String
+  type          DocType      @relation(fields: [typeCode], references: [code])
+  workId        String
+  work          Work         @relation(fields: [workId], references: [id])
+  categoryCode  String?
+  category      Category?    @relation(fields: [categoryCode], references: [code])
+  subCategoryId String?
+  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
+
+  status      DocStatus @default(DRAFT)
+  version     Int       @default(1)
+  description String    @default("")
+  controlled  Boolean   @default(true)
+
+  effectiveAt  DateTime? // วันที่ประกาศใช้
+  revisedAt    DateTime? // แก้ไขล่าสุด
+  nextReviewAt DateTime? // กำหนดทบทวนถัดไป
+
+  ownerId      String?
+  owner        User?   @relation("DocOwner", fields: [ownerId], references: [id])
+  ownerName    String // ผู้จัดทำ (เก็บชื่อคงไว้ในทะเบียนแม้ผู้ใช้ถูกลบ)
+  approverName String  @default("")
+
+  attachments Attachment[]
+  revisions   Revision[]
+  acks        Acknowledgement[]
+  auditLogs   AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workId, categoryCode, status])
+  @@index([typeCode])
+  @@index([status, effectiveAt])
+}
+
+model Revision {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version    Int
+  note       String
+  byId       String?
+  by         User?    @relation(fields: [byId], references: [id])
+  byName     String
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, version])
+}
+
+enum AttachmentKind {
+  PDF // เปิดดู
+  WORD // แก้ไข
+  EXCEL // แก้ไข
+  URL // ลิงก์ระบบ / E-Doc
+}
+
+model Attachment {
+  id           String         @id @default(cuid())
+  documentId   String
+  document     Document       @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  kind         AttachmentKind
+  filename     String
+  storedName   String? // ชื่อไฟล์ใน UPLOAD_DIR (null สำหรับ URL)
+  url          String? // สำหรับ kind=URL
+  size         Int?
+  mime         String?
+  note         String         @default("")
+  uploadedById String?
+  uploadedBy   User?          @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime       @default(now())
+
+  @@index([documentId])
+}
+
+model Acknowledgement {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version    Int // รับทราบที่เวอร์ชันใด
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, userId])
+  @@index([userId])
+}
+
+// ---------- Audit trail (ISO 15189) ----------
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id])
+  userName   String    @default("")
+  action     String // LOGIN, REGISTER_DOC, PUBLISH, REVISE, CANCEL, ACK, UPLOAD, ...
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id])
+  detail     String    @default("")
+  createdAt  DateTime  @default(now())
+
+  @@index([documentId])
+  @@index([createdAt])
+}

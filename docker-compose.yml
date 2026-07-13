@@ -1,0 +1,63 @@
+# On-premise deployment: PostgreSQL + one-off migrator + app.
+#   1. cp .env.example .env  and fill SESSION_SECRET (openssl rand -base64 32)
+#   2. docker compose up -d --build
+# The `migrate` service applies migrations (and seeds on first run if
+# SEED_ON_START=1), then exits; `app` starts only after it succeeds.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: masterlist
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-masterlist_prod}
+      POSTGRES_DB: masterlist
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U masterlist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      target: builder
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://masterlist:${DB_PASSWORD:-masterlist_prod}@db:5432/masterlist
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      SEED_DEMO: ${SEED_DEMO:-0}
+      SEED_ON_START: ${SEED_ON_START:-0}
+    command:
+      - sh
+      - -c
+      - |
+        npx prisma migrate deploy
+        if [ "$${SEED_ON_START}" = "1" ]; then npx tsx prisma/seed.ts; fi
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://masterlist:${DB_PASSWORD:-masterlist_prod}@db:5432/masterlist
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  pgdata:
+  uploads:
