@@ -74,7 +74,7 @@ export default function DocumentActions(p: Props) {
       )}
       {p.showDelete && (
         <button type="button" onClick={() => setModal("delete")} style={btnDanger}>
-          ลบเอกสาร (ลงผิด)
+          ลบเอกสาร
         </button>
       )}
 
@@ -129,7 +129,7 @@ export default function DocumentActions(p: Props) {
       {modal === "delete" && (
         <Modal
           kicker="ลบเอกสาร"
-          title="ลบเอกสารที่ลงทะเบียนผิด"
+          title="ลบเอกสาร"
           onClose={() => !pending && setModal(null)}
           footer={
             <>

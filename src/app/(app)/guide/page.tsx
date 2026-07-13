@@ -57,7 +57,7 @@ export default async function GuidePage() {
       <section style={{ marginTop: 44 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 6 }}>
           <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: 0 }}>สิทธิ์การใช้งานตามบทบาท</h2>
-          <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>6 บทบาท · 8 สิทธิ์</span>
+          <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>{ROLE_ORDER.length} บทบาท · {PERM_COLS.length} สิทธิ์</span>
         </div>
         <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 18px" }}>แถวที่แถบสีคือบทบาทที่คุณใช้งานอยู่ · Administrator เป็นสิทธิ์สูงสุดของระบบ</p>
         <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>

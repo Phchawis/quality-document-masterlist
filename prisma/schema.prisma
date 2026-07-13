@@ -15,7 +15,8 @@ enum Role {
   HEAD_CAT // หัวหน้าหมวดงาน
   MED_TECH // นักเทคนิคการแพทย์
   ASSISTANT // ผู้ช่วยนักเทคนิคการแพทย์
-  ADMIN_STAFF // เจ้าหน้าที่ธุรการ
+  ADMIN_STAFF // เจ้าหน้าที่ธุรการ (Office Clerk)
+  DOC_MANAGER // ผู้จัดการเอกสาร
 }
 
 model User {

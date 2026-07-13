@@ -99,13 +99,19 @@ export const ROLE_META: Record<
   },
   ADMIN_STAFF: {
     th: "เจ้าหน้าที่ธุรการ",
-    en: "Admin Staff",
+    en: "Office Clerk",
+    perms: "อ่าน · รับทราบ",
+    p: { acknowledge: true },
+  },
+  DOC_MANAGER: {
+    th: "ผู้จัดการเอกสาร",
+    en: "Document Manager",
     perms: "ลงทะเบียน · แนบไฟล์ · รับทราบ",
     p: { register: true, upload: true, acknowledge: true },
   },
 };
 
-export const ROLE_ORDER: Role[] = ["SYSADMIN", "HEAD_WORK", "HEAD_CAT", "MED_TECH", "ASSISTANT", "ADMIN_STAFF"];
+export const ROLE_ORDER: Role[] = ["SYSADMIN", "HEAD_WORK", "HEAD_CAT", "MED_TECH", "ASSISTANT", "ADMIN_STAFF", "DOC_MANAGER"];
 
 export function can(role: Role | undefined | null, perm: Perm): boolean {
   if (!role) return false;
