@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { STATUS_META, KIND_META, WORKS, ACK_TYPES, beDate } from "@/lib/reference";
 import { acknowledgeDocuments } from "@/app/actions/documents";
 
@@ -33,8 +33,6 @@ type Props = {
   cols: string;
   canAck: boolean;
   userId: string;
-  sortLink: (key: string) => string;
-  caret: (key: string) => string;
 };
 
 export default function MasterlistTable({
@@ -42,13 +40,29 @@ export default function MasterlistTable({
   cols,
   canAck,
   userId,
-  sortLink,
-  caret,
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const sortKey = searchParams.get("sort") ?? "code";
+  const sortDir = searchParams.get("dir") ?? "asc";
+
+  const getSortLink = (key: string) => {
+    const p = new URLSearchParams();
+    searchParams.forEach((v, k) => {
+      if (v && k !== "page" && k !== "sort" && k !== "dir") {
+        p.set(k, v);
+      }
+    });
+    p.set("sort", key);
+    p.set("dir", sortKey === key && sortDir === "asc" ? "desc" : "asc");
+    return `/masterlist?${p.toString()}`;
+  };
+
+  const getCaret = (key: string) => (sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "");
 
   // Filter documents that can be acknowledged (ACTIVE, requires ack, and user hasn't acked yet)
   const ackableDocs = docs.filter(
@@ -138,13 +152,13 @@ export default function MasterlistTable({
                   />
                 </span>
               )}
-              <Link href={sortLink("code")} style={{ padding: "13px 12px", color: "inherit" }}>รหัส{caret("code")}</Link>
-              <Link href={sortLink("title")} style={{ padding: "13px 12px", color: "inherit" }}>ชื่อเอกสาร{caret("title")}</Link>
+              <Link href={getSortLink("code")} style={{ padding: "13px 12px", color: "inherit" }}>รหัส{getCaret("code")}</Link>
+              <Link href={getSortLink("title")} style={{ padding: "13px 12px", color: "inherit" }}>ชื่อเอกสาร{getCaret("title")}</Link>
               <span style={{ padding: "13px 8px" }}>ประเภท</span>
               <span style={{ padding: "13px 8px" }}>งาน/หมวด</span>
               <span style={{ padding: "13px 8px" }}>เวอร์ชัน</span>
-              <Link href={sortLink("status")} style={{ padding: "13px 8px", color: "inherit" }}>สถานะ{caret("status")}</Link>
-              <Link href={sortLink("date")} style={{ padding: "13px 8px", color: "inherit" }}>ประกาศใช้{caret("date")}</Link>
+              <Link href={getSortLink("status")} style={{ padding: "13px 8px", color: "inherit" }}>สถานะ{getCaret("status")}</Link>
+              <Link href={getSortLink("date")} style={{ padding: "13px 8px", color: "inherit" }}>ประกาศใช้{getCaret("date")}</Link>
               <span style={{ padding: "13px 8px" }}>ไฟล์แนบ</span>
             </div>
             {docs.map((d) => {
