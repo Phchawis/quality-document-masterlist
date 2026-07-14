@@ -193,7 +193,7 @@ export function RegisterTutorial() {
             <ul style={tipList}>
               <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>ชื่อเอกสาร</b> — ชื่อเต็มของเอกสารฉบับนั้น</span></li>
               <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>รหัสเอกสาร</b> — กำหนดเอง เช่น HEM-WI-007 ใช้ได้เฉพาะ A–Z, 0–9 และขีดกลาง ระบบตรวจไม่ให้ซ้ำกับรหัสที่มีอยู่</span></li>
-              <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>งาน / หมวดงาน</b> — หมวดงานจะแสดงเมื่อเลือกงานเทคนิคการแพทย์</span></li>
+              <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>งาน / หมวดงาน</b> — หมวดงานจะแสดงเมื่อเลือกงานเทคนิคการแพทย์ เอกสารกลางที่ไม่สังกัดหมวดให้เลือก “เอกสารกลางระดับงาน” และหมวดที่มีหมวดย่อย (IMM, CMTL) จะมีช่องหมวดย่อยให้เลือกเพิ่ม</span></li>
               <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>ระยะเวลาจัดเก็บ/ทบทวน</b> — 2 ปี, 5 ปี หรือ 10 ปี ระบบใช้คำนวณกำหนดทบทวนถัดไป</span></li>
               <li style={tipItem}><span style={tipMark}>·</span><span><b style={{ color: "var(--text)", fontWeight: 600 }}>รูปแบบไฟล์แนบ</b> — ติ๊กได้หลายแบบพร้อมกัน เช่น PDF คู่กับ Word</span></li>
             </ul>

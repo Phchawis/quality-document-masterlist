@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ROLE_META, ACK_TYPES } from "@/lib/reference";
+import { ROLE_META, ACK_TYPES, can } from "@/lib/reference";
 import type { Role } from "@/generated/prisma/enums";
 import Header from "@/components/Header";
 
@@ -23,7 +23,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Header
         userName={user.fullName}
         roleTh={ROLE_META[user.role as Role].th}
-        isAdmin={user.role === "SYSADMIN"}
+        showUsers={can(user.role, "viewUsers")}
+        showAudit={can(user.role, "audit")}
         ackPending={ackPending}
       />
       <main style={{ flex: "1 1 auto", width: "100%", maxWidth: 1360, margin: "0 auto", padding: "clamp(24px,4vw,48px) clamp(16px,3vw,32px)" }}>

@@ -111,15 +111,17 @@ export default function MasterlistFilters() {
             </option>
           ))}
         </select>
-        <select value={cur.cat} onChange={(e) => update({ cat: e.target.value })} aria-label="กรองตามหมวดงาน" style={selectStyle}>
-          <option value="ALL">ทุกหมวดงาน</option>
-          {CATEGORIES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.code} · {c.nameTh}
-              {c.subs ? " ▸" : ""}
-            </option>
-          ))}
-        </select>
+        {cur.work === "MEDTECH" && (
+          <select value={cur.cat} onChange={(e) => update({ cat: e.target.value })} aria-label="กรองตามหมวดงาน" style={selectStyle}>
+            <option value="ALL">ทุกหมวดงาน</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} · {c.nameTh}
+                {c.subs ? " ▸" : ""}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "22px 32px", marginTop: 18 }}>
@@ -149,10 +151,9 @@ export default function MasterlistFilters() {
         </div>
 
         {hasSubs && (
-          <div style={{ flex: "1 1 100%", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "12px 0 2px", borderTop: "1px dashed var(--line2)", animation: "fadeUp .25s ease both" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, marginRight: 2 }}>
-              <span aria-hidden style={{ width: 14, height: 1, background: "var(--accent)" }} />
-              <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, letterSpacing: ".14em", color: "var(--accent)", textTransform: "uppercase" }}>หมวดย่อย · {curCat!.code}</span>
+          <div style={{ flex: "1 1 100%", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "12px 14px", background: "var(--accent-dim)", border: "1px solid var(--accent2)", borderRadius: 2, animation: "fadeUp .25s ease both" }}>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, letterSpacing: ".14em", color: "var(--accent)", textTransform: "uppercase", marginRight: 4 }}>
+              หมวดย่อย · {curCat!.code}
             </span>
             <button type="button" onClick={() => update({ sub: "ALL" })} aria-pressed={cur.sub === "ALL"} style={chipStyle(cur.sub === "ALL")}>
               ทั้งหมด

@@ -38,6 +38,16 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
   if (!RETENTION_YEARS.includes(retentionYears)) return { ok: false, error: "ระยะเวลาจัดเก็บไม่ถูกต้อง" };
   const categoryCode = workId === "MEDTECH" ? catRaw || null : null;
 
+  // Optional subcategory (only valid under a MEDTECH category that has one).
+  const subName = String(formData.get("sub") || "").trim();
+  let subCategoryId: string | null = null;
+  if (categoryCode && subName) {
+    const subRec = await prisma.subCategory.findUnique({
+      where: { categoryCode_name: { categoryCode, name: subName } },
+    });
+    subCategoryId = subRec?.id ?? null;
+  }
+
   const codeExists = await prisma.document.findUnique({ where: { code } });
   if (codeExists) return { ok: false, error: `รหัสเอกสาร ${code} มีอยู่แล้ว` };
 
@@ -52,6 +62,7 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
       typeCode,
       workId,
       categoryCode,
+      subCategoryId,
       status: "DRAFT",
       version: 1,
       description: "เอกสารลงทะเบียนใหม่ · รอตรวจสอบและประกาศใช้",

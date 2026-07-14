@@ -8,8 +8,12 @@ import { WORKS, CATEGORIES, DOC_TYPES } from "@/lib/reference";
 export default function RegisterButton() {
   const [open, setOpen] = useState(false);
   const [work, setWork] = useState("MEDTECH");
+  const [cat, setCat] = useState("HEM");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  const curCat = CATEGORIES.find((c) => c.code === cat);
+  const subs = work === "MEDTECH" ? curCat?.subs : undefined;
 
   const submit = (formData: FormData) => {
     setError(null);
@@ -65,14 +69,26 @@ export default function RegisterButton() {
               {work === "MEDTECH" && (
                 <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
                   หมวดงาน
-                  <select name="cat" defaultValue="HEM" style={fieldSelect}>
+                  <select name="cat" value={cat} onChange={(e) => setCat(e.target.value)} style={fieldSelect}>
+                    <option value="">— เอกสารกลางระดับงาน (ไม่สังกัดหมวด) —</option>
                     {CATEGORIES.map((c) => (
-                      <option key={c.code} value={c.code}>{c.code} · {c.nameTh}</option>
+                      <option key={c.code} value={c.code}>{c.code} · {c.nameTh}{c.subs ? " ▸" : ""}</option>
                     ))}
                   </select>
                 </label>
               )}
             </div>
+            {subs && subs.length > 0 && (
+              <label style={{ ...fieldLabel, background: "var(--accent-dim)", border: "1px solid var(--accent2)", borderRadius: 2, padding: "10px 12px 12px" }}>
+                หมวดย่อยของ {curCat!.code} · {curCat!.nameTh}
+                <select name="sub" key={cat} defaultValue="" style={fieldSelect}>
+                  <option value="">— ไม่ระบุหมวดย่อย —</option>
+                  {subs.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
                 ประเภทเอกสาร

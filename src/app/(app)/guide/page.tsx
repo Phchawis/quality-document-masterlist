@@ -13,6 +13,8 @@ const PERM_COLS: [Perm | "view", string][] = [
   ["revise", "บันทึกแก้ไข"],
   ["publish", "ประกาศใช้"],
   ["approve", "อนุมัติ"],
+  ["audit", "ดูบันทึกตรวจสอบ"],
+  ["viewUsers", "ดูผู้ใช้งาน"],
   ["manage", "จัดการระบบ"],
 ];
 
@@ -63,10 +65,12 @@ export default async function GuidePage() {
           <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: 0 }}>สิทธิ์การใช้งานตามบทบาท</h2>
           <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>{ROLE_ORDER.length} บทบาท · {PERM_COLS.length} สิทธิ์</span>
         </div>
-        <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 18px" }}>แถวที่แถบสีคือบทบาทที่คุณใช้งานอยู่ · Administrator เป็นสิทธิ์สูงสุดของระบบ</p>
+        <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 18px" }}>
+          แถวที่แถบสีคือบทบาทที่คุณใช้งานอยู่ · Administrator เป็นสิทธิ์สูงสุดของระบบ · “ดูผู้ใช้งาน” เป็นการดูรายชื่อแบบอ่านอย่างเดียว การเพิ่ม/แก้ไข/ปิดบัญชีอยู่ในสิทธิ์ “จัดการระบบ”
+        </p>
         <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
-            <div style={{ minWidth: 1060, ["--pcols" as string]: "minmax(200px,1.4fr) repeat(8,minmax(96px,1fr))" }}>
+            <div style={{ minWidth: 1220, ["--pcols" as string]: `minmax(200px,1.4fr) repeat(${PERM_COLS.length},minmax(96px,1fr))` }}>
               <div style={{ display: "grid", gridTemplateColumns: "var(--pcols)", alignItems: "center", background: "var(--surface2)", borderBottom: "1px solid var(--line2)" }}>
                 <span style={{ padding: "13px 14px", fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--muted)" }}>บทบาท</span>
                 {PERM_COLS.map(([, label]) => (

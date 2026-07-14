@@ -10,11 +10,12 @@ import { initials } from "@/lib/reference";
 type Props = {
   userName: string;
   roleTh: string;
-  isAdmin: boolean;
+  showUsers: boolean;
+  showAudit: boolean;
   ackPending: number;
 };
 
-export default function Header({ userName, roleTh, isAdmin, ackPending }: Props) {
+export default function Header({ userName, roleTh, showUsers, showAudit, ackPending }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [theme, setTheme] = useState<"dark" | "cream">("dark");
@@ -35,12 +36,8 @@ export default function Header({ userName, roleTh, isAdmin, ackPending }: Props)
     { href: "/", label: "ภาพรวม", active: pathname === "/" },
     { href: "/masterlist", label: "ทะเบียนเอกสาร", active: pathname.startsWith("/masterlist") || pathname.startsWith("/documents") },
     { href: "/guide", label: "คู่มือ", active: pathname === "/guide" },
-    ...(isAdmin
-      ? [
-          { href: "/admin/users", label: "ผู้ใช้งาน", active: pathname.startsWith("/admin/users") },
-          { href: "/admin/audit", label: "ตรวจสอบ", active: pathname.startsWith("/admin/audit") },
-        ]
-      : []),
+    ...(showUsers ? [{ href: "/admin/users", label: "ผู้ใช้งาน", active: pathname.startsWith("/admin/users") }] : []),
+    ...(showAudit ? [{ href: "/admin/audit", label: "ตรวจสอบ", active: pathname.startsWith("/admin/audit") }] : []),
   ];
 
   const navStyle = (on: boolean): React.CSSProperties => ({

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/reference";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ function fmt(d: Date): string {
 
 export default async function AuditPage({ searchParams }: { searchParams: Promise<{ page?: string; action?: string }> }) {
   const me = await getCurrentUser();
-  if (!me || me.role !== "SYSADMIN") redirect("/");
+  if (!me || !can(me.role, "audit")) redirect("/");
 
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);

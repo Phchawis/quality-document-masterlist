@@ -18,7 +18,7 @@ export type UserRow = {
   self: boolean;
 };
 
-export default function UserManager({ users }: { users: UserRow[] }) {
+export default function UserManager({ users, readOnly = false }: { users: UserRow[]; readOnly?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [modal, setModal] = useState<null | "create" | { edit: UserRow } | { pw: UserRow }>(null);
@@ -47,15 +47,19 @@ export default function UserManager({ users }: { users: UserRow[] }) {
       else { close(); refresh(); }
     });
 
-  const cols = "minmax(160px,1.4fr) 150px minmax(150px,1fr) 120px 110px 150px";
+  const cols = readOnly
+    ? "minmax(160px,1.4fr) 150px minmax(150px,1fr) 120px 110px"
+    : "minmax(160px,1.4fr) 150px minmax(150px,1fr) 120px 110px 150px";
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 18 }}>
-        <button type="button" onClick={() => setModal("create")} style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, padding: "11px 18px", borderRadius: 2 }}>
-          <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 17, lineHeight: 1 }}>+</span> เพิ่มผู้ใช้งาน
-        </button>
-      </div>
+      {!readOnly && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 18 }}>
+          <button type="button" onClick={() => setModal("create")} style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, padding: "11px 18px", borderRadius: 2 }}>
+            <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 17, lineHeight: 1 }}>+</span> เพิ่มผู้ใช้งาน
+          </button>
+        </div>
+      )}
 
       <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>
         <div style={{ overflowX: "auto" }}>
@@ -66,7 +70,7 @@ export default function UserManager({ users }: { users: UserRow[] }) {
               <span style={{ padding: "13px 8px" }}>งานสังกัด</span>
               <span style={{ padding: "13px 8px" }}>สถานะ</span>
               <span style={{ padding: "13px 8px" }}>สร้างเมื่อ</span>
-              <span style={{ padding: "13px 8px" }}>จัดการ</span>
+              {!readOnly && <span style={{ padding: "13px 8px" }}>จัดการ</span>}
             </div>
             {users.map((u) => (
               <div key={u.id} style={{ display: "grid", gridTemplateColumns: cols, alignItems: "center", borderBottom: "1px solid var(--line)" }}>
@@ -86,15 +90,17 @@ export default function UserManager({ users }: { users: UserRow[] }) {
                   </span>
                 </span>
                 <span style={{ padding: "12px 8px", fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)" }}>{u.createdAt}</span>
-                <span style={{ padding: "12px 8px", display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <button type="button" onClick={() => setModal({ edit: u })} style={miniBtn}>แก้ไข</button>
-                  <button type="button" onClick={() => setModal({ pw: u })} style={miniBtn}>รหัสผ่าน</button>
-                  {!u.self && (
-                    <button type="button" disabled={pending} onClick={() => start(async () => { await toggleActive(u.id); refresh(); })} style={{ ...miniBtn, color: u.isActive ? "var(--red)" : "var(--accent)" }}>
-                      {u.isActive ? "ปิด" : "เปิด"}
-                    </button>
-                  )}
-                </span>
+                {!readOnly && (
+                  <span style={{ padding: "12px 8px", display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => setModal({ edit: u })} style={miniBtn}>แก้ไข</button>
+                    <button type="button" onClick={() => setModal({ pw: u })} style={miniBtn}>รหัสผ่าน</button>
+                    {!u.self && (
+                      <button type="button" disabled={pending} onClick={() => start(async () => { await toggleActive(u.id); refresh(); })} style={{ ...miniBtn, color: u.isActive ? "var(--red)" : "var(--accent)" }}>
+                        {u.isActive ? "ปิด" : "เปิด"}
+                      </button>
+                    )}
+                  </span>
+                )}
               </div>
             ))}
           </div>

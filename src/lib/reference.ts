@@ -61,7 +61,9 @@ export type Perm =
   | "approve"
   | "upload"
   | "manage"
-  | "propose";
+  | "propose"
+  | "audit" // ดูบันทึกการตรวจสอบ
+  | "viewUsers"; // ดูรายชื่อผู้ใช้ (อ่านอย่างเดียว — จัดการได้เฉพาะ manage)
 
 export const ROLE_META: Record<
   Role,
@@ -71,19 +73,19 @@ export const ROLE_META: Record<
     th: "ผู้ดูแลระบบ (Administrator)",
     en: "System Admin",
     perms: "สิทธิ์สูงสุด · จัดการระบบทั้งหมด",
-    p: { register: true, publish: true, revise: true, acknowledge: true, approve: true, upload: true, manage: true },
+    p: { register: true, publish: true, revise: true, acknowledge: true, approve: true, upload: true, manage: true, audit: true, viewUsers: true },
   },
   HEAD_WORK: {
     th: "หัวหน้างาน",
     en: "Division Head",
     perms: "อนุมัติ · ประกาศใช้ · แก้ไข",
-    p: { register: true, publish: true, revise: true, acknowledge: true, approve: true, upload: true },
+    p: { register: true, publish: true, revise: true, acknowledge: true, approve: true, upload: true, audit: true, viewUsers: true },
   },
   HEAD_CAT: {
     th: "หัวหน้าหมวดงาน",
     en: "Section Head",
     perms: "ประกาศใช้ · แก้ไข · ลงทะเบียน",
-    p: { register: true, publish: true, revise: true, acknowledge: true, upload: true },
+    p: { register: true, publish: true, revise: true, acknowledge: true, upload: true, audit: true },
   },
   MED_TECH: {
     th: "นักเทคนิคการแพทย์",
@@ -107,7 +109,7 @@ export const ROLE_META: Record<
     th: "ผู้จัดการเอกสาร",
     en: "Document Manager",
     perms: "ลงทะเบียน · แนบไฟล์ · รับทราบ",
-    p: { register: true, upload: true, acknowledge: true },
+    p: { register: true, upload: true, acknowledge: true, audit: true },
   },
 };
 
