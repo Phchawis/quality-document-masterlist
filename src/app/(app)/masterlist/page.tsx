@@ -60,12 +60,6 @@ export default async function MasterlistPage({ searchParams }: { searchParams: P
   // Preserve current filters when building sort/page links.
   const baseParams = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) if (v && k !== "page" && k !== "sort" && k !== "dir") baseParams.set(k, v);
-  const sortLink = (key: string) => {
-    const p = new URLSearchParams(baseParams);
-    p.set("sort", key);
-    p.set("dir", sortKey === key && sortDir === "asc" ? "desc" : "asc");
-    return `/masterlist?${p.toString()}`;
-  };
   const pageLink = (n: number) => {
     const p = new URLSearchParams(baseParams);
     if (sortKey !== "code") p.set("sort", sortKey);
@@ -73,7 +67,6 @@ export default async function MasterlistPage({ searchParams }: { searchParams: P
     p.set("page", String(n));
     return `/masterlist?${p.toString()}`;
   };
-  const caret = (key: string) => (sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "");
 
   const activeChips: { label: string; clear: string }[] = [];
   const clearOne = (key: string) => {
@@ -151,8 +144,6 @@ export default async function MasterlistPage({ searchParams }: { searchParams: P
           cols={cols}
           canAck={canAck}
           userId={user.id}
-          sortLink={sortLink}
-          caret={caret}
         />
       </div>
 
