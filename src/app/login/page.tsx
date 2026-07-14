@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { prisma } from "@/lib/db";
 import LoginForm from "./login-form";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   ];
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexWrap: "wrap", animation: "fadeIn .5s ease both" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexWrap: "wrap", animation: "fadeIn .5s ease both", position: "relative" }}>
+      <ThemeToggle style={{ position: "absolute", top: "clamp(16px,3vw,28px)", right: "clamp(16px,3vw,28px)", zIndex: 5 }} />
       {/* Left editorial panel */}
       <section
         style={{
