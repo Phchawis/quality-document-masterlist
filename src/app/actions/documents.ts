@@ -185,6 +185,34 @@ export async function acknowledgeDocument(documentId: string): Promise<ActionRes
   return { ok: true, documentId };
 }
 
+export async function acknowledgeDocuments(documentIds: string[]): Promise<ActionResult> {
+  const user = await getCurrentUser();
+  if (!user || !can(user.role, "acknowledge")) return { ok: false, error: "ไม่มีสิทธิ์รับทราบ" };
+  if (!documentIds.length) return { ok: false, error: "กรุณาเลือกเอกสารที่ต้องการรับทราบ" };
+
+  const docs = await prisma.document.findMany({
+    where: { id: { in: documentIds }, status: "ACTIVE" }
+  });
+
+  await prisma.$transaction(
+    docs.map((doc) =>
+      prisma.acknowledgement.upsert({
+        where: { documentId_userId: { documentId: doc.id, userId: user.id } },
+        update: { version: doc.version },
+        create: { documentId: doc.id, userId: user.id, version: doc.version },
+      })
+    )
+  );
+
+  for (const doc of docs) {
+    await log(user.id, user.fullName, "ACK", doc.id, `รับทราบ ${doc.code} v.${doc.version}`);
+  }
+
+  revalidatePath("/masterlist");
+  revalidatePath("/");
+  return { ok: true };
+}
+
 // ---------- Attachments ----------
 export async function uploadAttachment(documentId: string, formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser();
@@ -196,19 +224,26 @@ export async function uploadAttachment(documentId: string, formData: FormData): 
   const saved = await saveUpload(file);
   if (!saved) return { ok: false, error: "รองรับเฉพาะไฟล์ PDF, Word, Excel" };
 
-  await prisma.attachment.create({
-    data: {
-      documentId,
-      kind: saved.kind,
-      filename: file.name,
-      storedName: saved.storedName,
-      size: saved.size,
-      mime: saved.mime,
-      note: `แนบโดย ${user.fullName}`,
-      uploadedById: user.id,
-    },
-  });
-  await log(user.id, user.fullName, "UPLOAD", documentId, `แนบไฟล์ ${file.name}`);
+  try {
+    await prisma.attachment.create({
+      data: {
+        documentId,
+        kind: saved.kind,
+        filename: file.name,
+        storedName: saved.storedName,
+        size: saved.size,
+        mime: saved.mime,
+        note: `แนบโดย ${user.fullName}`,
+        uploadedById: user.id,
+      },
+    });
+    await log(user.id, user.fullName, "UPLOAD", documentId, `แนบไฟล์ ${file.name}`);
+  } catch {
+    // Prevent orphaned files on disk if db entry creation fails
+    await deleteStored(saved.storedName);
+    return { ok: false, error: "เกิดข้อผิดพลาดในการบันทึกข้อมูลแนบลงฐานข้อมูล" };
+  }
+
   revalidatePath(`/documents/${documentId}`);
   return { ok: true, documentId };
 }

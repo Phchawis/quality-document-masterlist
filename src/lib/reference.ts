@@ -122,16 +122,15 @@ export function can(role: Role | undefined | null, perm: Perm): boolean {
 
 export const ACK_TYPES = ["QM", "SP", "WI"];
 
-// Thai Buddhist-era date formatting.
-const TH_MONTHS = [
-  "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-  "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
-];
-
 export function beDate(d: Date | string | null | undefined): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;
-  return `${date.getDate()} ${TH_MONTHS[date.getMonth()]} ${date.getFullYear() + 543}`;
+  return new Intl.DateTimeFormat("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Bangkok"
+  }).format(date);
 }
 
 export function initials(name: string): string {

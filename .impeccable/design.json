@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-14T14:08:00Z",
+  "title": "Design System: ทะเบียนควบคุมเอกสารคุณภาพ",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Thammasat Green", "canonical": "oklch(63% 0.17 155)", "tonalRamp": ["#082012", "#0c311c", "#124b2b", "#1e7a46", "#37b26e", "#64d394", "#a2ebb8", "#dbf8e5"] },
+      "neutral-bg": { "role": "neutral", "displayName": "Dark Background", "canonical": "#0a0d0c", "tonalRamp": ["#050606", "#0a0d0c", "#111615", "#161c1a", "#222a27", "#44524c", "#7e8a84", "#eff3f1"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "หน้าแรกและชื่อเอกสารคุณภาพ" },
+      "body": { "displayName": "Body", "purpose": "ข้อความอธิบาย ประวัติ และคู่มือหลัก" },
+      "mono": { "displayName": "Mono", "purpose": "รหัสเอกสาร ลำดับเวอร์ชัน และประวัติตรวจสอบ" }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "fadeUp", "value": "fadeUp .35s ease both", "purpose": "อนิเมชั่นเลื่อนขึ้นเมื่อเปิดหน้าต่างหรือโหลดเอกสาร" }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "ปุ่มหลักสำหรับการกระทำสำคัญ เช่น บันทึกการรับทราบการอ่าน",
+      "html": "<button class=\"ds-btn-primary\">บันทึกการอ่าน / รับทราบ</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background: #37b26e; color: #05130c; font-family: var(--font-anuphan), sans-serif; font-weight: 600; font-size: 14.5px; padding: 11px 20px; border: none; border-radius: 2px; cursor: pointer; transition: background 0.15s; } .ds-btn-primary:hover { background: #2a8f58; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "ปุ่มทำงานรอง เช่น ปุ่มแก้ไข ปล่อยตัว หรือแก้ไขเวอร์ชัน",
+      "html": "<button class=\"ds-btn-ghost\">บันทึกแก้ไข</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #eff3f1; font-family: var(--font-anuphan), sans-serif; font-weight: 600; font-size: 14.5px; padding: 11px 18px; border: 1px solid rgba(230, 238, 235, 0.14); border-radius: 2px; cursor: pointer; transition: background 0.15s, color 0.15s; } .ds-btn-ghost:hover { background: rgba(230, 238, 235, 0.08); }"
+    },
+    {
+      "name": "Status Badge Active",
+      "kind": "chip",
+      "refersTo": "status-active",
+      "description": "สถานะแสดงว่าเอกสารประกาศใช้แล้ว",
+      "html": "<span class=\"ds-status-active\"><span class=\"ds-dot\"></span>ประกาศใช้</span>",
+      "css": ".ds-status-active { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid #37b26e; border-radius: 2px; font-family: var(--font-plex-mono), monospace; font-size: 12px; color: #37b26e; } .ds-status-active .ds-dot { width: 6px; height: 6px; border-radius: 50%; background: #37b26e; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Clinical Logbook",
+    "overview": "ระบบทะเบียนเอกสารคุณภาพได้รับการออกแบบให้มีภาพลักษณ์ที่ \"แม่นยำ · น่าเชื่อถือ · สงบ\" เพื่อตอบรับการทำงานอย่างเป็นระบบภายใต้มาตรฐานสากล ISO 15189:2022 หลีกเลี่ยงรูปแบบการออกแบบตามกระแสสตาร์ทอัพ SaaS",
+    "keyCharacteristics": [
+      "Monospace Numbers สำหรับรหัสและเวอร์ชันทั้งหมด",
+      "Flat Layout Boundaries ไร้เงาลอย ป้องกัน SaaS Cliché",
+      "Two Equal Themes สลับธีมได้สมบูรณ์แบบไม่ขัดสายตา"
+    ],
+    "rules": [
+      { "name": "The 10% Accent Rule", "body": "สีเขียวสัญลักษณ์จะถูกใช้เฉพาะบนสิ่งที่มีความสำคัญต่อขั้นตอนการทำเอกสารเท่านั้น พื้นที่ส่วนใหญ่ต้องเป็นโทนกลาง", "section": "colors" },
+      { "name": "The Readable Prose Rule", "body": "ข้อความประเภทเนื้อความทั่วไปต้องจำกัดความยาว 65-75 ตัวอักษรต่อบรรทัด", "section": "typography" },
+      { "name": "The Absolute Flatness Rule", "body": "ห้ามใช้เงาลอยยกเว้นโมดัลแจ้งเตือนที่วางทับหน้าจอ", "section": "elevation" }
+    ],
+    "dos": [
+      "Do แสดงรหัสเอกสารนำหน้าชื่อเอกสารเสมอในทุกๆ ลิงก์และลิสต์",
+      "Do ใช้ป้ายกำกับข้อความร่วมกับไอคอนต่างๆ เสมอ (ห้ามใช้ไอคอนลอย)",
+      "Do ออกแบบระบบให้ใช้งานบนมือถือขนาด 375px ได้อย่างคล่องตัว"
+    ],
+    "donts": [
+      "Don't ใช้สไตล์การ์ดซ้อนการ์ด (Nested Cards) เด็ดขาด",
+      "Don't ใช้เงาลอยเบลอหนาแบบกลาสมอร์ฟิก (Glassmorphism)",
+      "Don't เขียนข้อความ Eyebrow พิมพ์ใหญ่ขนาดจิ๋วซ้ำๆ เหนือทุกเซ็กชั่น"
+    ]
+  }
+}

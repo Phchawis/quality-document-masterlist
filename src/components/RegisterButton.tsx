@@ -12,10 +12,51 @@ export default function RegisterButton() {
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
+  const [title, setTitle] = useState("");
+  const [code, setCode] = useState("");
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
+
   const curCat = CATEGORIES.find((c) => c.code === cat);
   const subs = work === "MEDTECH" ? curCat?.subs : undefined;
 
+  const validateTitle = (val: string) => {
+    if (!val.trim()) {
+      setTitleError("กรุณาระบุชื่อเอกสาร");
+      return false;
+    }
+    setTitleError(null);
+    return true;
+  };
+
+  const validateCode = (val: string) => {
+    const clean = val.trim().toUpperCase();
+    if (!clean) {
+      setCodeError("กรุณาระบุรหัสเอกสาร");
+      return false;
+    }
+    if (!/^[A-Z0-9-]+$/.test(clean)) {
+      setCodeError("รหัสเอกสารใช้ได้เฉพาะตัวอักษร A-Z, 0-9 และ -");
+      return false;
+    }
+    setCodeError(null);
+    return true;
+  };
+
+  const handleOpen = () => {
+    setTitle("");
+    setCode("");
+    setTitleError(null);
+    setCodeError(null);
+    setError(null);
+    setOpen(true);
+  };
+
   const submit = (formData: FormData) => {
+    const tValid = validateTitle(title);
+    const cValid = validateCode(code);
+    if (!tValid || !cValid) return;
+
     setError(null);
     start(async () => {
       const res = await registerDocument(formData);
@@ -28,7 +69,7 @@ export default function RegisterButton() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, padding: "11px 18px", borderRadius: 2 }}
       >
         <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 17, lineHeight: 1 }}>+</span> ลงทะเบียนเอกสาร
@@ -51,11 +92,33 @@ export default function RegisterButton() {
           <form id="register-form" action={submit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <label style={fieldLabel}>
               ชื่อเอกสาร
-              <input name="title" placeholder="เช่น การตรวจ…" style={fieldInput} />
+              <input
+                name="title"
+                placeholder="เช่น การตรวจ…"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (titleError) validateTitle(e.target.value);
+                }}
+                onBlur={(e) => validateTitle(e.target.value)}
+                style={{ ...fieldInput, borderColor: titleError ? "var(--red)" : "var(--line2)" }}
+              />
+              {titleError && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 5, fontFamily: "var(--sans)", textTransform: "none" }}>{titleError}</div>}
             </label>
             <label style={fieldLabel}>
               รหัสเอกสาร
-              <input name="code" placeholder="เช่น HEM-WI-006" style={{ ...fieldInput, fontFamily: "var(--mono)", textTransform: "uppercase" }} />
+              <input
+                name="code"
+                placeholder="เช่น HEM-WI-006"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (codeError) validateCode(e.target.value);
+                }}
+                onBlur={(e) => validateCode(e.target.value)}
+                style={{ ...fieldInput, fontFamily: "var(--mono)", textTransform: "uppercase", borderColor: codeError ? "var(--red)" : "var(--line2)" }}
+              />
+              {codeError && <div style={{ fontSize: 12, color: "var(--red)", marginTop: 5, fontFamily: "var(--sans)", textTransform: "none" }}>{codeError}</div>}
             </label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
