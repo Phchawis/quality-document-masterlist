@@ -33,15 +33,16 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
       .map((u, i) => {
         const roleName = ROLE_META[u.role].th.replace(/\s*\(.*\)/, "");
         const workName = WORKS.find((w) => w.id === u.workId)?.nameTh ?? "—";
+        const badgeClass = u.isActive ? "badge badge-active" : "badge badge-inactive";
         const statusText = u.isActive ? "ใช้งาน" : "ปิดใช้งาน";
         return `
           <tr>
-            <td style="text-align: center;">${i + 1}</td>
-            <td>${u.fullName}</td>
-            <td>@${u.username}</td>
+            <td style="text-align: center; color: #718096; font-family: monospace;">${i + 1}</td>
+            <td style="font-weight: 600;">${u.fullName}</td>
+            <td style="font-family: monospace; color: #4a5568;">@${u.username}</td>
             <td>${roleName}</td>
             <td>${workName}</td>
-            <td style="text-align: center;">${statusText}</td>
+            <td style="text-align: center;"><span class="${badgeClass}">${statusText}</span></td>
           </tr>
         `;
       })
@@ -56,53 +57,103 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
           <style>
             body {
               font-family: 'Sarabun', 'Helvetica Neue', Arial, sans-serif;
-              padding: 20px;
-              color: #333;
+              padding: 40px;
+              color: #1a202c;
+              background-color: #fff;
+              line-height: 1.5;
             }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
+            .header-container {
+              border-bottom: 2px solid #2d3748;
+              padding-bottom: 15px;
+              margin-bottom: 25px;
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
             }
-            .header h1 {
+            .title-section h1 {
               font-size: 20px;
-              margin: 0 0 8px;
+              margin: 0 0 6px;
+              color: #1a365d;
+              font-weight: 700;
             }
-            .header p {
+            .title-section p {
               font-size: 13px;
               margin: 0;
-              color: #666;
+              color: #4a5568;
+            }
+            .meta-section {
+              text-align: right;
+              font-size: 12px;
+              color: #718096;
             }
             table {
               width: 100%;
               border-collapse: collapse;
-              margin-top: 15px;
+              margin-top: 10px;
               font-size: 13px;
             }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px 10px;
+            th {
+              background-color: #f7fafc;
+              color: #2d3748;
+              font-weight: 700;
+              border-top: 2px solid #2d3748;
+              border-bottom: 2px solid #2d3748;
+              padding: 10px 12px;
               text-align: left;
             }
-            th {
-              background-color: #f5f5f5;
-              font-weight: bold;
+            td {
+              border-bottom: 1px solid #e2e8f0;
+              padding: 10px 12px;
+              color: #2d3748;
+            }
+            tr:nth-child(even) {
+              background-color: #f8fafc;
+            }
+            .badge {
+              display: inline-block;
+              padding: 3px 8px;
+              border-radius: 4px;
+              font-size: 11px;
+              font-weight: 600;
+            }
+            .badge-active {
+              background-color: #def7ec;
+              color: #03543f;
+              border: 1px solid #bdf2d5;
+            }
+            .badge-inactive {
+              background-color: #fde8e8;
+              color: #9b1c1c;
+              border: 1px solid #fbd5d5;
             }
             .footer {
-              margin-top: 40px;
-              text-align: right;
+              position: fixed;
+              bottom: 30px;
+              left: 40px;
+              right: 40px;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 12px;
+              display: flex;
+              justify-content: space-between;
               font-size: 11px;
-              color: #999;
+              color: #a0aec0;
             }
             @media print {
               body { padding: 0; }
-              button { display: none; }
+              .footer { left: 0; right: 0; }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>รายงานรายชื่อผู้ใช้งานและบทบาทหน้าที่ในระบบ</h1>
-            <p>ทะเบียนเอกสารควบคุมคุณภาพ สหเวชศาสตร์ · วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date())}</p>
+          <div class="header-container">
+            <div class="title-section">
+              <h1>รายงานรายชื่อผู้ใช้งานและบทบาทหน้าที่ในระบบ</h1>
+              <p>ทะเบียนเอกสารควบคุมคุณภาพ งานเทคนิคการแพทย์ สหเวชศาสตร์</p>
+            </div>
+            <div class="meta-section">
+              <div>วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date())}</div>
+              <div>จำนวนผู้ใช้ทั้งหมด: ${users.length} รายการ</div>
+            </div>
           </div>
           <table>
             <thead>
@@ -112,7 +163,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
                 <th>ชื่อผู้ใช้ (Username)</th>
                 <th>บทบาท (สิทธิ์)</th>
                 <th>งานสังกัด (หน่วยงาน)</th>
-                <th style="width: 80px; text-align: center;">สถานะ</th>
+                <th style="width: 100px; text-align: center;">สถานะการใช้งาน</th>
               </tr>
             </thead>
             <tbody>
@@ -120,7 +171,8 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
             </tbody>
           </table>
           <div class="footer">
-            พิมพ์โดยผู้ดูแลระบบ · หน้า 1/1
+            <div>ระบบทะเบียนเอกสารควบคุมคุณภาพ (Quality Document Control)</div>
+            <div>พิมพ์โดยผู้ดูแลระบบ · หน้า 1 / 1</div>
           </div>
           <script>
             window.onload = function() {
@@ -173,7 +225,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 9,
+                gap: 8,
                 background: "var(--surface)",
                 border: "1px solid var(--line2)",
                 color: "var(--sub)",
@@ -182,9 +234,17 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
                 fontSize: 14.5,
                 padding: "11px 18px",
                 borderRadius: 2,
-                cursor: "pointer"
+                cursor: "pointer",
+                transition: "all .15s ease"
               }}
             >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--red)", flexShrink: 0 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
               ออกรายงาน PDF
             </button>
           )}
