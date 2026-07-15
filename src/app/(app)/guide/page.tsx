@@ -66,7 +66,7 @@ export default async function GuidePage() {
           <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>{ROLE_ORDER.length} บทบาท · {PERM_COLS.length} สิทธิ์</span>
         </div>
         <p style={{ fontSize: 14, color: "var(--muted)", margin: "0 0 18px" }}>
-          แถวที่แถบสีคือบทบาทที่คุณใช้งานอยู่ · Administrator เป็นสิทธิ์สูงสุดของระบบ · “ดูผู้ใช้งาน” เป็นการดูรายชื่อแบบอ่านอย่างเดียว การเพิ่ม/แก้ไข/ปิดบัญชีอยู่ในสิทธิ์ “จัดการระบบ”
+          แถวที่แถบสีคือบทบาทที่คุณใช้งานอยู่ · Administrator เป็นสิทธิ์สูงสุดของระบบ · “ดูผู้ใช้งาน” เป็นการดูรายชื่อแบบอ่านอย่างเดียว การเพิ่ม/แก้ไข/ปิดบัญชี และออกรายงาน PDF อยู่ในสิทธิ์ “จัดการระบบ” (เฉพาะ Administrator)
         </p>
         <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>
           <div style={{ overflowX: "auto" }}>
@@ -116,6 +116,50 @@ export default async function GuidePage() {
           ))}
         </div>
       </section>
+
+      {user.role === "SYSADMIN" && (
+        <section style={{ marginTop: 44, borderTop: "1px solid var(--line2)", paddingTop: 36, marginBottom: 8 }}>
+          <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: "0 0 12px", color: "var(--text)" }}>การดูแลระบบและการสำรองข้อมูล (สำหรับ Administrator)</h2>
+          <p style={{ fontSize: 14.5, color: "var(--sub)", margin: "0 0 20px", lineHeight: 1.6 }}>
+            คู่มือสำหรับผู้ดูแลระบบเกี่ยวกับการตั้งค่าเซิร์ฟเวอร์หลักและระบบสำรองข้อมูลอัตโนมัติไปยัง Google Drive
+          </p>
+          <div style={{ background: "var(--surface)", border: "1px solid var(--line2)", borderRadius: 3, padding: "20px 22px" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 10px", color: "var(--text)" }}>🕒 ระบบสำรองข้อมูลอัตโนมัติ (Daily Backup Schedule)</h3>
+            <p style={{ fontSize: 14, color: "var(--sub)", margin: "0 0 14px", lineHeight: 1.65 }}>
+              เซิร์ฟเวอร์หลัก (VPS) ได้รับการติดตั้งสคริปต์ <b><code>/opt/masterlist/backup.sh</code></b> ร่วมกับ Cron Job ซึ่งจะทำงานอัตโนมัติทุกวันในเวลา <b>00:00 น.</b> เพื่อส่งไฟล์สำรองขึ้นไปยัง Google Drive ในโฟลเดอร์ <b><code>Masterlist_Backups</code></b> ของบัญชี <b><code>gpharkchawisp@gmail.com</code></b>:
+            </p>
+            <ul style={{ margin: "12px 0 0", paddingLeft: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+              <li style={{ display: "flex", gap: 9, fontSize: 13.5, color: "var(--sub)", lineHeight: 1.6 }}>
+                <span style={{ color: "var(--accent)", fontFamily: "var(--mono)", flex: "0 0 auto" }}>·</span>
+                <span><b>ไฟล์ฐานข้อมูล:</b> บันทึกในชื่อ <code>db_backup_YYYYMMDD_HHMMSS.sql.gz</code> (เก็บย้อนหลัง 30 วันบนเซิร์ฟเวอร์)</span>
+              </li>
+              <li style={{ display: "flex", gap: 9, fontSize: 13.5, color: "var(--sub)", lineHeight: 1.6 }}>
+                <span style={{ color: "var(--accent)", fontFamily: "var(--mono)", flex: "0 0 auto" }}>·</span>
+                <span><b>ไฟล์เอกสารแนบจริง:</b> บันทึกในชื่อ <code>files_backup_YYYYMMDD_HHMMSS.tar.gz</code> (เก็บย้อนหลัง 30 วันบนเซิร์ฟเวอร์)</span>
+              </li>
+            </ul>
+
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "22px 0 10px", color: "var(--text)" }}>🔄 ขั้นตอนการกู้คืนระบบกรณีฉุกเฉิน (Database & File Restore)</h3>
+            <p style={{ fontSize: 14, color: "var(--sub)", margin: "0 0 12px", lineHeight: 1.65 }}>
+              หากเกิดเหตุขัดข้องประการใดและต้องการดึงประวัติย้อนหลังหรือไฟล์เอกสารกลับคืนมา สามารถกู้คืนผ่านทาง SSH โดยพิมพ์คำสั่งตามลำดับดังนี้:
+            </p>
+            <div style={{ background: "var(--bg2)", padding: "14px 18px", borderRadius: 2, border: "1px solid var(--line)", fontFamily: "var(--mono)", fontSize: 12.5, lineHeight: 1.6, color: "var(--text)", overflowX: "auto", whiteSpace: "pre" }}>
+{`# 1. กู้คืนฐานข้อมูล (Database Restore)
+gunzip -c /var/backups/masterlist/db_backup_XXXXXXXX_XXXXXX.sql.gz > /tmp/restore.sql
+docker exec -i masterlist-db-1 psql -U masterlist -d masterlist < /tmp/restore.sql
+rm /tmp/restore.sql
+
+# 2. กู้คืนไฟล์อัปโหลดทั้งหมด (Files Restore)
+tar -xzf /var/backups/masterlist/files_backup_XXXXXXXX_XXXXXX.tar.gz -C /var/lib/docker/volumes/masterlist_uploads/_data/`}
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "22px 0 10px", color: "var(--text)" }}>⚡ แรมเสมือนป้องกันระบบล่ม (Swap Space)</h3>
+            <p style={{ fontSize: 14, color: "var(--sub)", margin: "0", lineHeight: 1.65 }}>
+              เซิร์ฟเวอร์ VPS ได้รับการเปิดใช้งานแรมเสมือน (Swap Space) ขนาด <b>4.0 GB</b> เพิ่มเติมจากแรมจริง 2.0 GB ทำให้ระบบมีทรัพยากรหน่วยความจำรวม 6.0 GB เพื่อความเสถียรสูงสุดขณะคอมไพล์โค้ดหรือรันโปรเจกต์อื่นๆ ร่วมด้วย
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
