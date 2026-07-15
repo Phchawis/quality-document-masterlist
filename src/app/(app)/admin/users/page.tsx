@@ -35,7 +35,7 @@ export default async function AdminUsersPage() {
         </p>
       </div>
       <div style={{ marginTop: 28 }}>
-        <UserManager users={rows} readOnly={readOnly} />
+        <UserManager users={rows} readOnly={readOnly} isAdmin={me.role === "SYSADMIN"} />
       </div>
     </div>
   );

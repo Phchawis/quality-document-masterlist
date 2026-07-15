@@ -18,12 +18,123 @@ export type UserRow = {
   self: boolean;
 };
 
-export default function UserManager({ users, readOnly = false }: { users: UserRow[]; readOnly?: boolean }) {
+export default function UserManager({ users, readOnly = false, isAdmin = false }: { users: UserRow[]; readOnly?: boolean; isAdmin?: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [modal, setModal] = useState<null | "create" | { edit: UserRow } | { pw: UserRow }>(null);
   const [error, setError] = useState<string | null>(null);
   const [pw, setPw] = useState("");
+
+  const handlePrint = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const rowsHtml = users
+      .map((u, i) => {
+        const roleName = ROLE_META[u.role].th.replace(/\s*\(.*\)/, "");
+        const workName = WORKS.find((w) => w.id === u.workId)?.nameTh ?? "—";
+        const statusText = u.isActive ? "ใช้งาน" : "ปิดใช้งาน";
+        return `
+          <tr>
+            <td style="text-align: center;">${i + 1}</td>
+            <td>${u.fullName}</td>
+            <td>@${u.username}</td>
+            <td>${roleName}</td>
+            <td>${workName}</td>
+            <td style="text-align: center;">${statusText}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>รายงานรายชื่อผู้ใช้งานระบบ</title>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: 'Sarabun', 'Helvetica Neue', Arial, sans-serif;
+              padding: 20px;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              font-size: 20px;
+              margin: 0 0 8px;
+            }
+            .header p {
+              font-size: 13px;
+              margin: 0;
+              color: #666;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 15px;
+              font-size: 13px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px 10px;
+              text-align: left;
+            }
+            th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+            }
+            .footer {
+              margin-top: 40px;
+              text-align: right;
+              font-size: 11px;
+              color: #999;
+            }
+            @media print {
+              body { padding: 0; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>รายงานรายชื่อผู้ใช้งานและบทบาทหน้าที่ในระบบ</h1>
+            <p>ทะเบียนเอกสารควบคุมคุณภาพ สหเวชศาสตร์ · วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date())}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">ลำดับ</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>ชื่อผู้ใช้ (Username)</th>
+                <th>บทบาท (สิทธิ์)</th>
+                <th>งานสังกัด (หน่วยงาน)</th>
+                <th style="width: 80px; text-align: center;">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <div class="footer">
+            พิมพ์โดยผู้ดูแลระบบ · หน้า 1/1
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
 
   const refresh = () => router.refresh();
   const close = () => { setModal(null); setError(null); setPw(""); };
@@ -53,11 +164,35 @@ export default function UserManager({ users, readOnly = false }: { users: UserRo
 
   return (
     <div>
-      {!readOnly && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 18 }}>
-          <button type="button" onClick={() => setModal("create")} style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, padding: "11px 18px", borderRadius: 2 }}>
-            <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 17, lineHeight: 1 }}>+</span> เพิ่มผู้ใช้งาน
-          </button>
+      {(isAdmin || !readOnly) && (
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginBottom: 18 }}>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={handlePrint}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 9,
+                background: "var(--surface)",
+                border: "1px solid var(--line2)",
+                color: "var(--sub)",
+                fontFamily: "var(--display)",
+                fontWeight: 600,
+                fontSize: 14.5,
+                padding: "11px 18px",
+                borderRadius: 2,
+                cursor: "pointer"
+              }}
+            >
+              ออกรายงาน PDF
+            </button>
+          )}
+          {!readOnly && (
+            <button type="button" onClick={() => setModal("create")} style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, padding: "11px 18px", borderRadius: 2 }}>
+              <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 17, lineHeight: 1 }}>+</span> เพิ่มผู้ใช้งาน
+            </button>
+          )}
         </div>
       )}
 
