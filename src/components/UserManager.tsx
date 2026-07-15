@@ -314,9 +314,9 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
             <button type="button" onClick={close} style={btnGhostModal}>ยกเลิก</button>
             <button type="submit" form="user-create" disabled={pending} style={{ ...btnPrimary, opacity: pending ? 0.7 : 1 }}>สร้างผู้ใช้</button>
           </>}>
-          <form id="user-create" action={submitCreate} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <label style={fieldLabel}>ชื่อ-นามสกุล<input name="fullName" placeholder="เช่น ทนพ.สมชาย ใจดี" style={fieldInput} /></label>
-            <label style={fieldLabel}>ชื่อผู้ใช้ (username)<input name="username" placeholder="somchai.j" style={fieldInput} /></label>
+          <form id="user-create" action={submitCreate} autoComplete="off" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <label style={fieldLabel}>ชื่อ-นามสกุล<input name="fullName" placeholder="เช่น ทนพ.สมชาย ใจดี" autoComplete="new-name" style={fieldInput} /></label>
+            <label style={fieldLabel}>ชื่อผู้ใช้ (username)<input name="username" placeholder="somchai.j" autoComplete="new-username" style={fieldInput} /></label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 180px" }}>บทบาท
                 <select name="role" defaultValue="MED_TECH" style={fieldSelect}>
@@ -330,7 +330,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
                 </select>
               </label>
             </div>
-            <label style={fieldLabel}>รหัสผ่านเริ่มต้น<input name="password" type="text" placeholder="อย่างน้อย 8 ตัวอักษร" style={fieldInput} /></label>
+            <label style={fieldLabel}>รหัสผ่านเริ่มต้น<input name="password" type="text" placeholder="อย่างน้อย 8 ตัวอักษร" autoComplete="new-password" style={fieldInput} /></label>
             {error && <div role="alert" style={{ fontSize: 13.5, color: "var(--red)" }}>{error}</div>}
           </form>
         </Modal>
@@ -342,9 +342,9 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
             <button type="button" onClick={close} style={btnGhostModal}>ยกเลิก</button>
             <button type="submit" form="user-edit" disabled={pending} style={{ ...btnPrimary, opacity: pending ? 0.7 : 1 }}>บันทึก</button>
           </>}>
-          <form id="user-edit" action={(fd) => submitEdit(modal.edit, fd)} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <label style={fieldLabel}>ชื่อ-นามสกุล<input name="fullName" defaultValue={modal.edit.fullName} style={fieldInput} /></label>
-            <label style={fieldLabel}>ชื่อผู้ใช้ (username)<input name="username" defaultValue={modal.edit.username} style={fieldInput} /></label>
+          <form id="user-edit" action={(fd) => submitEdit(modal.edit, fd)} autoComplete="off" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <label style={fieldLabel}>ชื่อ-นามสกุล<input name="fullName" defaultValue={modal.edit.fullName} autoComplete="new-name" style={fieldInput} /></label>
+            <label style={fieldLabel}>ชื่อผู้ใช้ (username)<input name="username" defaultValue={modal.edit.username} autoComplete="new-username" style={fieldInput} /></label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <label style={{ ...fieldLabel, flex: "1 1 180px" }}>บทบาท
                 <select name="role" defaultValue={modal.edit.role} style={fieldSelect}>
@@ -371,7 +371,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
           </>}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: 0 }}>ตั้งรหัสผ่านใหม่ให้ @{modal.pw.username} — แจ้งรหัสให้ผู้ใช้และให้เปลี่ยนภายหลัง</p>
-            <label style={fieldLabel}>รหัสผ่านใหม่<input value={pw} onChange={(e) => setPw(e.target.value)} type="text" placeholder="อย่างน้อย 8 ตัวอักษร" style={fieldInput} /></label>
+            <label style={fieldLabel}>รหัสผ่านใหม่<input value={pw} onChange={(e) => setPw(e.target.value)} type="text" placeholder="อย่างน้อย 8 ตัวอักษร" autoComplete="new-password" style={fieldInput} /></label>
             {error && <div role="alert" style={{ fontSize: 13.5, color: "var(--red)" }}>{error}</div>}
           </div>
         </Modal>
