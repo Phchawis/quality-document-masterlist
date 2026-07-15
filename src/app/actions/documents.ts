@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { can, WORKS, KIND_META } from "@/lib/reference";
+import { can, canUserEdit, WORKS, KIND_META } from "@/lib/reference";
 import { saveUpload, deleteStored } from "@/lib/storage";
 import type { AttachmentKind } from "@/generated/prisma/enums";
 
@@ -19,7 +19,7 @@ export type ActionResult = { ok: boolean; error?: string; documentId?: string };
 // ---------- Register ----------
 export async function registerDocument(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลงทะเบียนเอกสาร" };
+  if (!user || !canUserEdit(user, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลงทะเบียนเอกสาร" };
 
   const title = String(formData.get("title") || "").trim();
   const workId = String(formData.get("work") || "");
@@ -91,7 +91,7 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
 // ---------- Revise ----------
 export async function reviseDocument(documentId: string, note: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "revise")) return { ok: false, error: "ไม่มีสิทธิ์แก้ไขเอกสาร" };
+  if (!user || !canUserEdit(user, "revise")) return { ok: false, error: "ไม่มีสิทธิ์แก้ไขเอกสาร" };
   const doc = await prisma.document.findUnique({ where: { id: documentId } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
   if (doc.status === "OBSOLETE") return { ok: false, error: "เอกสารถูกยกเลิกแล้ว" };
@@ -115,7 +115,7 @@ export async function reviseDocument(documentId: string, note: string): Promise<
 // ---------- Publish ----------
 export async function publishDocument(documentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "publish")) return { ok: false, error: "ไม่มีสิทธิ์ประกาศใช้" };
+  if (!user || !canUserEdit(user, "publish")) return { ok: false, error: "ไม่มีสิทธิ์ประกาศใช้" };
   const doc = await prisma.document.findUnique({ where: { id: documentId } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
 
@@ -138,7 +138,7 @@ export async function publishDocument(documentId: string): Promise<ActionResult>
 // ---------- Delete (draft only, never acknowledged — fixes registration mistakes) ----------
 export async function deleteDocument(documentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลบเอกสาร" };
+  if (!user || !canUserEdit(user, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลบเอกสาร" };
   const doc = await prisma.document.findUnique({ where: { id: documentId }, include: { attachments: true, acks: true } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
   if (doc.status !== "DRAFT") return { ok: false, error: "ลบได้เฉพาะเอกสารสถานะฉบับร่างเท่านั้น (เอกสารที่เคยประกาศใช้ให้ใช้ปุ่มยกเลิกการใช้งานแทน)" };
@@ -157,7 +157,7 @@ export async function deleteDocument(documentId: string): Promise<ActionResult> 
 // ---------- Cancel ----------
 export async function cancelDocument(documentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "register")) return { ok: false, error: "ไม่มีสิทธิ์ยกเลิกเอกสาร" };
+  if (!user || !canUserEdit(user, "register")) return { ok: false, error: "ไม่มีสิทธิ์ยกเลิกเอกสาร" };
   const doc = await prisma.document.findUnique({ where: { id: documentId } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
   await prisma.document.update({ where: { id: documentId }, data: { status: "OBSOLETE" } });
@@ -216,7 +216,7 @@ export async function acknowledgeDocuments(documentIds: string[]): Promise<Actio
 // ---------- Attachments ----------
 export async function uploadAttachment(documentId: string, formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "upload")) return { ok: false, error: "ไม่มีสิทธิ์แนบไฟล์" };
+  if (!user || !canUserEdit(user, "upload")) return { ok: false, error: "ไม่มีสิทธิ์แนบไฟล์" };
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "ไม่พบไฟล์" };
   if (file.size > 50 * 1024 * 1024) return { ok: false, error: "ไฟล์ใหญ่เกิน 50MB" };
@@ -250,7 +250,7 @@ export async function uploadAttachment(documentId: string, formData: FormData): 
 
 export async function addUrlAttachment(documentId: string, url: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "upload")) return { ok: false, error: "ไม่มีสิทธิ์แนบลิงก์" };
+  if (!user || !canUserEdit(user, "upload")) return { ok: false, error: "ไม่มีสิทธิ์แนบลิงก์" };
   let u = url.trim();
   if (!u) return { ok: false, error: "กรุณาวางลิงก์" };
   if (!/^https?:\/\//i.test(u)) u = "https://" + u;
@@ -265,7 +265,7 @@ export async function addUrlAttachment(documentId: string, url: string): Promise
 
 export async function removeAttachment(attachmentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user || !can(user.role, "upload")) return { ok: false, error: "ไม่มีสิทธิ์" };
+  if (!user || !canUserEdit(user, "upload")) return { ok: false, error: "ไม่มีสิทธิ์" };
   const att = await prisma.attachment.findUnique({ where: { id: attachmentId } });
   if (!att) return { ok: false, error: "ไม่พบไฟล์แนบ" };
   if (att.storedName) await deleteStored(att.storedName);

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getDocumentById } from "@/lib/documents";
-import { STATUS_META, WORKS, CATEGORIES, DOC_TYPES, ACK_TYPES, can, beDate } from "@/lib/reference";
+import { STATUS_META, WORKS, CATEGORIES, DOC_TYPES, ACK_TYPES, can, canUserEdit, beDate } from "@/lib/reference";
 import DocumentActions from "@/components/DocumentActions";
 import AttachmentManager, { type AttView } from "@/components/AttachmentManager";
 
@@ -107,10 +107,10 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         ackRequired={ackRequired}
         ackByMe={ackByMe}
         canAck={can(user.role, "acknowledge")}
-        showPublish={(doc.status === "DRAFT" || doc.status === "REVIEW") && can(user.role, "publish")}
-        showRevise={can(user.role, "revise") && doc.status !== "OBSOLETE"}
-        showCancel={can(user.role, "register") && doc.status !== "OBSOLETE"}
-        showDelete={can(user.role, "register") && doc.status === "DRAFT" && ackDoneCount === 0}
+        showPublish={(doc.status === "DRAFT" || doc.status === "REVIEW") && canUserEdit(user, "publish")}
+        showRevise={canUserEdit(user, "revise") && doc.status !== "OBSOLETE"}
+        showCancel={canUserEdit(user, "register") && doc.status !== "OBSOLETE"}
+        showDelete={canUserEdit(user, "register") && doc.status === "DRAFT" && ackDoneCount === 0}
       />
 
       {/* timeline */}
@@ -136,7 +136,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
           <section>
             <h2 style={secLabel}>ไฟล์แนบ</h2>
-            <AttachmentManager documentId={doc.id} atts={attViews} canUpload={can(user.role, "upload")} canView={true} />
+            <AttachmentManager documentId={doc.id} atts={attViews} canUpload={canUserEdit(user, "upload")} canView={true} />
           </section>
 
           <section>

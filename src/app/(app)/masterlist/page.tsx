@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { STATUS_META, WORKS, can } from "@/lib/reference";
+import { STATUS_META, WORKS, can, canUserEdit } from "@/lib/reference";
 import type { DocStatus } from "@/generated/prisma/enums";
 import { buildDocWhere, buildDocOrderBy } from "@/lib/documents";
 import RegisterButton from "@/components/RegisterButton";
@@ -97,7 +97,7 @@ export default async function MasterlistPage({ searchParams }: { searchParams: P
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <ExportButton />
-          {can(user.role, "register") && <RegisterButton />}
+          {canUserEdit(user, "register") && <RegisterButton />}
         </div>
       </div>
 

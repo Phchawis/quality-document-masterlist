@@ -11,7 +11,7 @@ export type UserActionResult = { ok: boolean; error?: string };
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "SYSADMIN") return null;
+  if (!user || user.role !== "SYSADMIN" || user.username !== "gpharkp") return null;
   return user;
 }
 

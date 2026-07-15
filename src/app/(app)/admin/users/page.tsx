@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { beDate, can } from "@/lib/reference";
+import { beDate, can, canUserEdit } from "@/lib/reference";
 import UserManager, { type UserRow } from "@/components/UserManager";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminUsersPage() {
   const me = await getCurrentUser();
   if (!me || !can(me.role, "viewUsers")) redirect("/");
-  const readOnly = !can(me.role, "manage");
+  const readOnly = !canUserEdit(me, "manage");
 
   const users = await prisma.user.findMany({ orderBy: [{ isActive: "desc" }, { createdAt: "asc" }] });
   const rows: UserRow[] = users.map((u) => ({
