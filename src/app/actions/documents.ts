@@ -67,7 +67,7 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
       version: 1,
       description: "เอกสารลงทะเบียนใหม่ · รอตรวจสอบและประกาศใช้",
       controlled: typeMeta?.controlled ?? true,
-      nextReviewAt: new Date(now.getTime() + retentionYears * 365 * 86400000),
+      nextReviewAt: new Date(now.getTime() + retentionYears * 360 * 86400000),
       ownerId: user.id,
       ownerName: user.fullName,
       approverName: "",
