@@ -73,10 +73,10 @@ model SubCategory {
 }
 
 model DocType {
-  code        String  @id // QM SP WI WS FM EF ED SD RF
+  code        String  @id // QM SOP WI WS FM EF ED SD RF
   nameTh      String
   nameEn      String
-  requiresAck Boolean @default(false) // QM SP WI ต้องลงนามรับทราบ
+  requiresAck Boolean @default(false) // QM SOP WI ต้องลงนามรับทราบ
   controlled  Boolean @default(true) // SD RF = ไม่ควบคุม
   order       Int     @default(0)
 

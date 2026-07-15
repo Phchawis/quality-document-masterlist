@@ -5,7 +5,7 @@ import type { Role } from "@/generated/prisma/enums";
 
 export const DOC_TYPES = [
   { code: "QM", nameTh: "คู่มือคุณภาพ", nameEn: "Quality Manual", requiresAck: true, controlled: true },
-  { code: "SP", nameTh: "ระเบียบปฏิบัติ", nameEn: "Standard Procedure", requiresAck: true, controlled: true },
+  { code: "SOP", nameTh: "ระเบียบปฏิบัติ", nameEn: "Standard Procedure", requiresAck: true, controlled: true },
   { code: "WI", nameTh: "วิธีปฏิบัติ", nameEn: "Work Instruction", requiresAck: true, controlled: true },
   { code: "WS", nameTh: "แบบบันทึกการปฏิบัติงาน", nameEn: "Work Sheet", requiresAck: false, controlled: true },
   { code: "FM", nameTh: "แบบฟอร์มบันทึก", nameEn: "Form Sheet", requiresAck: false, controlled: true },
@@ -125,7 +125,7 @@ export function canUserEdit(user: { role: Role; username: string } | null | unde
   return can(user.role, perm);
 }
 
-export const ACK_TYPES = ["QM", "SP", "WI"];
+export const ACK_TYPES = ["QM", "SOP", "WI"];
 
 export function beDate(d: Date | string | null | undefined): string {
   if (!d) return "—";
