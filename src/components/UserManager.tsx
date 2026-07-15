@@ -92,12 +92,18 @@ export default function UserManager({ users, readOnly = false }: { users: UserRo
                 <span style={{ padding: "12px 8px", fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)" }}>{u.createdAt}</span>
                 {!readOnly && (
                   <span style={{ padding: "12px 8px", display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <button type="button" onClick={() => setModal({ edit: u })} style={miniBtn}>แก้ไข</button>
-                    <button type="button" onClick={() => setModal({ pw: u })} style={miniBtn}>รหัสผ่าน</button>
-                    {!u.self && (
-                      <button type="button" disabled={pending} onClick={() => start(async () => { await toggleActive(u.id); refresh(); })} style={{ ...miniBtn, color: u.isActive ? "var(--red)" : "var(--accent)" }}>
-                        {u.isActive ? "ปิด" : "เปิด"}
-                      </button>
+                    {!(u.username === "gpharkp" && !u.self) ? (
+                      <>
+                        <button type="button" onClick={() => setModal({ edit: u })} style={miniBtn}>แก้ไข</button>
+                        <button type="button" onClick={() => setModal({ pw: u })} style={miniBtn}>รหัสผ่าน</button>
+                        {!u.self && (
+                          <button type="button" disabled={pending} onClick={() => start(async () => { await toggleActive(u.id); refresh(); })} style={{ ...miniBtn, color: u.isActive ? "var(--red)" : "var(--accent)" }}>
+                            {u.isActive ? "ปิด" : "เปิด"}
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 12.5, color: "var(--muted)", fontStyle: "italic" }}>บัญชีถูกล็อก</span>
                     )}
                   </span>
                 )}

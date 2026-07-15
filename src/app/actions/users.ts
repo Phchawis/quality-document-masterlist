@@ -11,7 +11,7 @@ export type UserActionResult = { ok: boolean; error?: string };
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "SYSADMIN" || user.username !== "gpharkp") return null;
+  if (!user || user.role !== "SYSADMIN") return null;
   return user;
 }
 
@@ -50,6 +50,11 @@ export async function updateUser(userId: string, formData: FormData): Promise<Us
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "เฉพาะผู้ดูแลระบบเท่านั้น" };
 
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (target && target.username === "gpharkp" && admin.username !== "gpharkp") {
+    return { ok: false, error: "ไม่มีสิทธิ์แก้ไขบัญชีผู้ใช้งานนี้" };
+  }
+
   const username = String(formData.get("username") || "").trim().toLowerCase();
   const fullName = String(formData.get("fullName") || "").trim();
   const role = String(formData.get("role") || "");
@@ -70,6 +75,12 @@ export async function updateUser(userId: string, formData: FormData): Promise<Us
 export async function resetPassword(userId: string, password: string): Promise<UserActionResult> {
   const admin = await requireAdmin();
   if (!admin) return { ok: false, error: "เฉพาะผู้ดูแลระบบเท่านั้น" };
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (target && target.username === "gpharkp" && admin.username !== "gpharkp") {
+    return { ok: false, error: "ไม่มีสิทธิ์แก้ไขบัญชีผู้ใช้งานนี้" };
+  }
+
   if (password.length < 8) return { ok: false, error: "รหัสผ่านอย่างน้อย 8 ตัวอักษร" };
   await prisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(password, 10) } });
   await prisma.auditLog.create({ data: { userId: admin.id, userName: admin.fullName, action: "RESET_PASSWORD", detail: `รีเซ็ตรหัสผ่านผู้ใช้ ${userId}` } });
@@ -103,6 +114,9 @@ export async function toggleActive(userId: string): Promise<UserActionResult> {
   if (userId === admin.id) return { ok: false, error: "ปิดใช้งานบัญชีตนเองไม่ได้" };
   const u = await prisma.user.findUnique({ where: { id: userId } });
   if (!u) return { ok: false, error: "ไม่พบผู้ใช้" };
+  if (u.username === "gpharkp" && admin.username !== "gpharkp") {
+    return { ok: false, error: "ไม่มีสิทธิ์จัดการบัญชีนี้" };
+  }
   await prisma.user.update({ where: { id: userId }, data: { isActive: !u.isActive } });
   await prisma.auditLog.create({ data: { userId: admin.id, userName: admin.fullName, action: "TOGGLE_USER", detail: `${u.isActive ? "ปิด" : "เปิด"}ใช้งาน ${u.username}` } });
   revalidatePath("/admin/users");

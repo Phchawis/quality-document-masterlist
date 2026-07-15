@@ -122,8 +122,6 @@ export function can(role: Role | undefined | null, perm: Perm): boolean {
 
 export function canUserEdit(user: { role: Role; username: string } | null | undefined, perm: Perm): boolean {
   if (!user) return false;
-  const isWrite = ["register", "publish", "revise", "upload", "manage"].includes(perm);
-  if (isWrite && user.username !== "gpharkp") return false;
   return can(user.role, perm);
 }
 
