@@ -7,8 +7,10 @@ import { getMedtechLink } from "@/app/actions/sso";
 
 // เปิดแท็บใหม่ทันที (กันตัวบล็อกป๊อปอัป) แล้วค่อยพา token เข้าสู่ระบบตามไปทีหลัง
 // เพราะการเซ็น token ต้องทำฝั่งเซิร์ฟเวอร์ (Server Action) จึงมีดีเลย์เล็กน้อยก่อนรู้ URL จริง
+// หมายเหตุ: ห้ามใส่ noopener/noreferrer ตรงนี้ — ตัวเลือกนี้ทำให้ window.open คืนค่า null เสมอ
+// ทำให้เราถือ handle ของแท็บใหม่ไว้ตั้งค่า location ทีหลังไม่ได้เลย
 async function openMedtech() {
-  const win = window.open("", "_blank", "noopener,noreferrer");
+  const win = window.open("", "_blank");
   const url = await getMedtechLink();
   if (!win) return;
   if (url) win.location.href = url;
