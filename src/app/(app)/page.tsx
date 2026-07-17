@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { WORKS, CATEGORIES, DOC_TYPES, STATUS_META, ROLE_META, ACK_TYPES, beDate } from "@/lib/reference";
+import { signMedtechHandoff, SSO_ENABLED } from "@/lib/sso";
 import type { DocStatus, Role } from "@/generated/prisma/enums";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,13 @@ const SEG_COLOR: Record<DocStatus, string> = {
 export default async function DashboardPage() {
   const user = (await getCurrentUser())!;
   const now = Date.now();
+  // ลิงก์ไปยัง Wedapp LAB (งาน MEDTECH) พร้อม token เข้าสู่ระบบอายุสั้น ถ้าตั้งค่า SSO ไว้แล้ว
+  const medtechHandoffUrl = SSO_ENABLED
+    ? await signMedtechHandoff(user.username).then(
+        (t) => `${WORKS.find((w) => w.id === "MEDTECH")?.externalUrl}/?sso=${encodeURIComponent(t)}`,
+        () => WORKS.find((w) => w.id === "MEDTECH")?.externalUrl
+      )
+    : WORKS.find((w) => w.id === "MEDTECH")?.externalUrl;
 
   const [total, byStatus, byType, byWork, byWorkStatus, ackPendingDocs, recent, yearRows] = await Promise.all([
     prisma.document.count(),
@@ -115,12 +123,16 @@ export default async function DashboardPage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", borderTop: "1px solid var(--line2)" }}>
               {WORKS.map((w) => {
+                const isExternal = !!w.externalUrl;
                 const c = workCount(w.id) || 1;
                 const segs = (["ACTIVE", "REVIEW", "DRAFT", "OBSOLETE"] as DocStatus[])
                   .map((k) => ({ k, n: byWorkStatus.find((x) => x.workId === w.id && x.status === k)?._count ?? 0 }))
                   .filter((x) => x.n > 0);
+                const rowProps = isExternal
+                  ? { href: medtechHandoffUrl as string, target: "_blank", rel: "noreferrer" }
+                  : { href: `/masterlist?work=${w.id}` };
                 return (
-                  <Link key={w.id} href={`/masterlist?work=${w.id}`} style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 6px", borderBottom: "1px solid var(--line)", textAlign: "left", width: "100%" }}>
+                  <a key={w.id} {...rowProps} style={{ display: "flex", alignItems: "center", gap: 20, padding: "20px 6px", borderBottom: "1px solid var(--line)", textAlign: "left", width: "100%" }}>
                     <span style={{ flex: "0 0 auto" }}>
                       {w.id === "MEDTECH" ? (
                         <Image src="/assets/logo-medtech.jpg" alt="" width={46} height={46} style={{ borderRadius: "50%", objectFit: "cover", display: "block" }} />
@@ -129,20 +141,35 @@ export default async function DashboardPage() {
                       )}
                     </span>
                     <span style={{ flex: "1 1 auto", minWidth: 0 }}>
-                      <span style={{ display: "block", fontFamily: "var(--display)", fontWeight: 600, fontSize: 16.5, color: "var(--text)" }}>{w.nameTh}</span>
-                      <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", marginTop: 2, letterSpacing: ".04em" }}>{w.nameEn}</span>
-                      <span style={{ display: "flex", height: 4, marginTop: 11, background: "var(--hi)", overflow: "hidden", maxWidth: 340 }}>
-                        {segs.map((sg) => (
-                          <span key={sg.k} style={{ display: "block", height: "100%", width: `${(sg.n / c) * 100}%`, background: SEG_COLOR[sg.k] }} />
-                        ))}
+                      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ display: "block", fontFamily: "var(--display)", fontWeight: 600, fontSize: 16.5, color: "var(--text)" }}>{w.nameTh}</span>
+                        {isExternal && (
+                          <span style={{ fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: ".08em", color: "var(--amber)", border: "1px solid var(--amber)", borderRadius: 2, padding: "1px 6px", textTransform: "uppercase" }}>
+                            ระบบแยก
+                          </span>
+                        )}
                       </span>
+                      <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", marginTop: 2, letterSpacing: ".04em" }}>{w.nameEn}</span>
+                      {!isExternal && (
+                        <span style={{ display: "flex", height: 4, marginTop: 11, background: "var(--hi)", overflow: "hidden", maxWidth: 340 }}>
+                          {segs.map((sg) => (
+                            <span key={sg.k} style={{ display: "block", height: "100%", width: `${(sg.n / c) * 100}%`, background: SEG_COLOR[sg.k] }} />
+                          ))}
+                        </span>
+                      )}
                     </span>
                     <span style={{ flex: "0 0 auto", textAlign: "right" }}>
-                      <span style={{ display: "block", fontFamily: "var(--display)", fontWeight: 700, fontSize: 24, color: "var(--text)", lineHeight: 1 }}>{workCount(w.id)}</span>
-                      <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--faint)", letterSpacing: ".1em", marginTop: 3 }}>ฉบับ</span>
-                      <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11, color: "var(--accent)", letterSpacing: ".05em", marginTop: 7 }}>ดูในทะเบียน →</span>
+                      {isExternal ? (
+                        <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11, color: "var(--amber)", letterSpacing: ".05em" }}>เปิดระบบแยก ↗</span>
+                      ) : (
+                        <>
+                          <span style={{ display: "block", fontFamily: "var(--display)", fontWeight: 700, fontSize: 24, color: "var(--text)", lineHeight: 1 }}>{workCount(w.id)}</span>
+                          <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--faint)", letterSpacing: ".1em", marginTop: 3 }}>ฉบับ</span>
+                          <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11, color: "var(--accent)", letterSpacing: ".05em", marginTop: 7 }}>ดูในทะเบียน →</span>
+                        </>
+                      )}
                     </span>
-                  </Link>
+                  </a>
                 );
               })}
             </div>
