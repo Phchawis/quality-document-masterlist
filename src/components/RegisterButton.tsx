@@ -7,7 +7,7 @@ import { WORKS, CATEGORIES, DOC_TYPES } from "@/lib/reference";
 
 export default function RegisterButton() {
   const [open, setOpen] = useState(false);
-  const [work, setWork] = useState("MEDTECH");
+  const [work, setWork] = useState<string>(WORKS.find((w) => !w.externalUrl)?.id ?? WORKS[0].id);
   const [cat, setCat] = useState("HEM");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -124,7 +124,7 @@ export default function RegisterButton() {
               <label style={{ ...fieldLabel, flex: "1 1 200px" }}>
                 งาน
                 <select name="work" value={work} onChange={(e) => setWork(e.target.value)} style={fieldSelect}>
-                  {WORKS.map((w) => (
+                  {WORKS.filter((w) => !w.externalUrl).map((w) => (
                     <option key={w.id} value={w.id}>{w.nameTh}</option>
                   ))}
                 </select>
