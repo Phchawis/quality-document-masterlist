@@ -225,8 +225,6 @@ export default async function DashboardPage() {
             </div>
           </section>
 
-          {/* categories */}
-          <CategorySection byWorkStatus={byWorkStatus} />
         </div>
 
         {/* right rail */}
@@ -307,30 +305,5 @@ export default async function DashboardPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Category grid grouped by work — links into the masterlist.
-function CategorySection({ byWorkStatus }: { byWorkStatus: { workId: string; status: DocStatus; _count: number }[] }) {
-  // Aggregate per work+category is heavier; render a simple category legend linking to filters.
-  void byWorkStatus;
-  return (
-    <section>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: 0 }}>หมวดงาน</h2>
-        <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em", marginLeft: "auto" }}>{CATEGORIES.length} หมวด</span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 1, background: "var(--line)", border: "1px solid var(--line)" }}>
-        {CATEGORIES.map((c) => (
-          <Link key={c.code} href={`/masterlist?cat=${c.code}`} style={{ background: "var(--bg)", padding: "15px 14px", textAlign: "left" }}>
-            <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ fontFamily: "var(--mono)", fontSize: 13, fontWeight: 600, color: "var(--accent)", letterSpacing: ".03em" }}>{c.code}</span>
-              {c.subs && <span style={{ fontFamily: "var(--mono)", fontSize: 11, color: "var(--faint)" }}>{c.subs.length} ย่อย</span>}
-            </span>
-            <span style={{ display: "block", fontSize: 13.5, color: "var(--sub)", marginTop: 7, lineHeight: 1.4 }}>{c.nameTh}</span>
-          </Link>
-        ))}
-      </div>
-    </section>
   );
 }
