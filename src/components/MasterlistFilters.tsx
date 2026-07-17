@@ -3,6 +3,17 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { WORKS, CATEGORIES, DOC_TYPES, STATUS_META } from "@/lib/reference";
+import { getMedtechLink } from "@/app/actions/sso";
+
+// เปิดแท็บใหม่ทันที (กันตัวบล็อกป๊อปอัป) แล้วค่อยพา token เข้าสู่ระบบตามไปทีหลัง
+// เพราะการเซ็น token ต้องทำฝั่งเซิร์ฟเวอร์ (Server Action) จึงมีดีเลย์เล็กน้อยก่อนรู้ URL จริง
+async function openMedtech() {
+  const win = window.open("", "_blank", "noopener,noreferrer");
+  const url = await getMedtechLink();
+  if (!win) return;
+  if (url) win.location.href = url;
+  else win.close();
+}
 
 const STATUS_KEYS = ["ACTIVE", "REVIEW", "DRAFT", "OBSOLETE"] as const;
 
@@ -130,11 +141,23 @@ export default function MasterlistFilters() {
           <button type="button" onClick={() => update({ work: "ALL" })} aria-pressed={cur.work === "ALL"} style={chipStyle(cur.work === "ALL")}>
             ทั้งหมด
           </button>
-          {WORKS.map((w) => (
-            <button key={w.id} type="button" onClick={() => update({ work: w.id })} aria-pressed={cur.work === w.id} title={w.nameTh} style={chipStyle(cur.work === w.id)}>
-              {w.code}
-            </button>
-          ))}
+          {WORKS.map((w) =>
+            w.externalUrl ? (
+              <button
+                key={w.id}
+                type="button"
+                onClick={openMedtech}
+                title={`${w.nameTh} — เปิดระบบแยก`}
+                style={{ ...chipStyle(false), borderColor: "var(--amber)", color: "var(--amber)" }}
+              >
+                {w.code} ↗
+              </button>
+            ) : (
+              <button key={w.id} type="button" onClick={() => update({ work: w.id })} aria-pressed={cur.work === w.id} title={w.nameTh} style={chipStyle(cur.work === w.id)}>
+                {w.code}
+              </button>
+            )
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, letterSpacing: ".14em", color: "var(--faint)", textTransform: "uppercase", marginRight: 2 }}>สถานะ</span>
