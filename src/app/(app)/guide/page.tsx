@@ -22,7 +22,7 @@ const STEPS = [
   { n: "01", t: "เข้าสู่ระบบด้วยบัญชีของคุณ", d: "เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่ได้รับ ระบบจะแสดงเมนูและปุ่มดำเนินการตามสิทธิ์ของบทบาทโดยอัตโนมัติ" },
   { n: "02", t: "ค้นหาเอกสารจากทะเบียน", d: "ค้นหาด้วยรหัสหรือชื่อเอกสาร ร่วมกับตัวกรอง งาน · ประเภท · หมวดงาน · สถานะ และคลิกหัวตารางเพื่อเรียงลำดับ" },
   { n: "03", t: "เปิดดูรายละเอียดเอกสาร", d: "คลิกแถวเอกสารเพื่อดูข้อมูลควบคุม ไฟล์แนบ ประวัติการแก้ไข และความคืบหน้าการรับทราบของหมวดงาน" },
-  { n: "04", t: "บันทึกการอ่าน / รับทราบ", d: "เอกสาร QM · SP · WI ต้องลงนามรับทราบ — กดปุ่มรับทราบ ระบบจะบันทึกชื่อและวันที่ของคุณทันที" },
+  { n: "04", t: "บันทึกการอ่าน / รับทราบ", d: "เอกสาร QM · SOP · WI ต้องลงนามรับทราบ — กดปุ่มรับทราบ ระบบจะบันทึกชื่อและวันที่ของคุณทันที" },
   { n: "05", t: "ลงทะเบียน แก้ไข ประกาศใช้", d: "ผู้มีสิทธิ์ลงทะเบียนเอกสารใหม่ บันทึกแก้ไขเพื่อปรับเวอร์ชัน ประกาศใช้ฉบับร่าง หรือยกเลิกการใช้งานได้จากหน้ารายละเอียด" },
 ];
 
@@ -42,6 +42,13 @@ export default async function GuidePage() {
         <div style={{ fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".24em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12 }}>User Guide</div>
         <h1 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "clamp(1.8rem,3.8vw,2.8rem)", letterSpacing: "-.02em", lineHeight: 1, margin: 0 }}>คู่มือการใช้งาน</h1>
         <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
+      </div>
+
+      <div style={{ marginTop: 28, display: "flex", gap: 14, alignItems: "flex-start", background: "var(--surface)", border: "1px solid var(--amber)", borderRadius: 3, padding: "16px 18px" }}>
+        <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 600, letterSpacing: ".08em", color: "var(--amber)", border: "1px solid var(--amber)", borderRadius: 2, padding: "3px 8px", flex: "0 0 auto", textTransform: "uppercase" }}>ระบบแยก</span>
+        <p style={{ fontSize: 14, color: "var(--sub)", margin: 0, lineHeight: 1.65 }}>
+          <b style={{ color: "var(--text)", fontWeight: 600 }}>งานห้องปฏิบัติการเทคนิคการแพทย์ (MedTech)</b> มีทะเบียนเอกสารเป็นระบบของตัวเองแยกต่างหาก — เมื่อเลือกงานนี้จากแดชบอร์ดหรือหน้าทะเบียน ระบบจะเปิดแท็บใหม่พาไปยังระบบนั้นโดยตรง (เข้าสู่ระบบให้อัตโนมัติหากบัญชีตรงกัน) ส่วนทะเบียนใน Masterlist นี้ดูแลงานเวชศาสตร์การบริการโลหิตและงานจุลชีววิทยา
+        </p>
       </div>
 
       <section style={{ marginTop: 36 }}>
