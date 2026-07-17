@@ -15,10 +15,18 @@ export const DOC_TYPES = [
   { code: "RF", nameTh: "เอกสารอ้างอิง", nameEn: "References", requiresAck: false, controlled: false },
 ] as const;
 
+// externalUrl: งานที่มีทะเบียนเอกสารแยกเป็นระบบของตัวเอง — Masterlist ไม่เก็บเอกสารของงานนี้
+// ในฐานข้อมูล ลิงก์ออกไปยังระบบนั้นแทนการกรองภายในหน้า Masterlist
 export const WORKS = [
-  { id: "MEDTECH", code: "MT", nameTh: "งานห้องปฏิบัติการเทคนิคการแพทย์", nameEn: "Medical Technology Laboratory" },
-  { id: "TRANSFUSION", code: "TRF", nameTh: "งานเวชศาสตร์การบริการโลหิต", nameEn: "Transfusion Medicine" },
-  { id: "MICRO", code: "MCB", nameTh: "งานจุลชีววิทยา", nameEn: "Microbiology" },
+  {
+    id: "MEDTECH",
+    code: "MT",
+    nameTh: "งานห้องปฏิบัติการเทคนิคการแพทย์",
+    nameEn: "Medical Technology Laboratory",
+    externalUrl: "https://tuh-lab-qms.onrender.com",
+  },
+  { id: "TRANSFUSION", code: "TRF", nameTh: "งานเวชศาสตร์การบริการโลหิต", nameEn: "Transfusion Medicine", externalUrl: undefined },
+  { id: "MICRO", code: "MCB", nameTh: "งานจุลชีววิทยา", nameEn: "Microbiology", externalUrl: undefined },
 ] as const;
 
 export const CATEGORIES: { code: string; nameTh: string; subs?: string[] }[] = [
