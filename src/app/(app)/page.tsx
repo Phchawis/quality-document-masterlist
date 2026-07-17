@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { WORKS, CATEGORIES, DOC_TYPES, STATUS_META, ROLE_META, ACK_TYPES, beDate } from "@/lib/reference";
+import { WORKS, DOC_TYPES, STATUS_META, ROLE_META, ACK_TYPES, beDate } from "@/lib/reference";
 import { signMedtechHandoff, SSO_ENABLED } from "@/lib/sso";
 import type { DocStatus, Role } from "@/generated/prisma/enums";
 
@@ -26,22 +26,26 @@ export default async function DashboardPage() {
       )
     : WORKS.find((w) => w.id === "MEDTECH")?.externalUrl;
 
+  // MEDTECH ไม่มีเอกสารจริงในฐานข้อมูลนี้อีกต่อไป (ย้ายไป Wedapp LAB ทั้งหมด) — ตัดออกจากสถิติภาพรวม
+  // ทุกตัว กันตัวเลขปนกับเอกสารตัวอย่าง/เก่าที่อาจค้างอยู่ ไม่ให้ Dashboard โกหกผู้ใช้
+  const NOT_MEDTECH = { workId: { not: "MEDTECH" } } as const;
+
   const [total, byStatus, byType, byWork, byWorkStatus, ackPendingDocs, recent, yearRows] = await Promise.all([
-    prisma.document.count(),
-    prisma.document.groupBy({ by: ["status"], _count: true }),
-    prisma.document.groupBy({ by: ["typeCode"], _count: true }),
+    prisma.document.count({ where: NOT_MEDTECH }),
+    prisma.document.groupBy({ by: ["status"], where: NOT_MEDTECH, _count: true }),
+    prisma.document.groupBy({ by: ["typeCode"], where: NOT_MEDTECH, _count: true }),
     prisma.document.groupBy({ by: ["workId"], _count: true }),
     prisma.document.groupBy({ by: ["workId", "status"], _count: true }),
     prisma.document.findMany({
-      where: { status: "ACTIVE", typeCode: { in: ACK_TYPES }, acks: { none: { userId: user.id } } },
+      where: { status: "ACTIVE", typeCode: { in: ACK_TYPES }, acks: { none: { userId: user.id } }, ...NOT_MEDTECH },
       include: { type: true },
       orderBy: { effectiveAt: "desc" },
       take: 4,
     }),
-    prisma.document.findMany({ where: { status: "ACTIVE" }, orderBy: { effectiveAt: "desc" }, take: 6 }),
+    prisma.document.findMany({ where: { status: "ACTIVE", ...NOT_MEDTECH }, orderBy: { effectiveAt: "desc" }, take: 6 }),
     prisma.$queryRaw<{ yr: number; n: bigint }[]>`
       SELECT EXTRACT(YEAR FROM "effectiveAt")::int AS yr, COUNT(*) AS n
-      FROM "Document" WHERE "effectiveAt" IS NOT NULL
+      FROM "Document" WHERE "effectiveAt" IS NOT NULL AND "workId" != 'MEDTECH'
       GROUP BY yr ORDER BY yr`,
   ]);
 
@@ -51,11 +55,11 @@ export default async function DashboardPage() {
   const typeCount = (c: string) => byType.find((x) => x.typeCode === c)?._count ?? 0;
   const workCount = (id: string) => byWork.find((x) => x.workId === id)?._count ?? 0;
   const ackPendingTotal = await prisma.document.count({
-    where: { status: "ACTIVE", typeCode: { in: ACK_TYPES }, acks: { none: { userId: user.id } } },
+    where: { status: "ACTIVE", typeCode: { in: ACK_TYPES }, acks: { none: { userId: user.id } }, ...NOT_MEDTECH },
   });
 
   const dueSoon = await prisma.document.count({
-    where: { nextReviewAt: { gt: new Date(now), lt: new Date(now + 120 * 86400000) } },
+    where: { nextReviewAt: { gt: new Date(now), lt: new Date(now + 120 * 86400000) }, ...NOT_MEDTECH },
   });
 
   const stats = [
