@@ -1,7 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_META, ROLE_ORDER } from "@/lib/reference";
 import type { Perm } from "@/lib/reference";
-import { RegisterTutorial, UploadTutorial } from "@/components/GuideTutorials";
+import { RegisterTutorial, UploadTutorial, ArchitectureGuide } from "@/components/GuideTutorials";
+import PrintGuideButton from "@/components/PrintGuideButton";
 
 export const dynamic = "force-dynamic";
 
@@ -37,11 +38,23 @@ export default async function GuidePage() {
   const user = (await getCurrentUser())!;
 
   return (
-    <div style={{ animation: "fadeUp .4s ease both" }}>
+    <div id="guide-doc" style={{ animation: "fadeUp .4s ease both" }}>
+      {/* ปกเฉพาะตอนพิมพ์ PDF */}
+      <div className="print-only" style={{ marginBottom: 18, paddingBottom: 14, borderBottom: "2px solid var(--accent)" }}>
+        <div style={{ fontFamily: "var(--mono)", fontSize: 11, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 6 }}>User Guide · คู่มือการใช้งาน</div>
+        <div style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: 22 }}>ทะเบียนเอกสารคุณภาพ ฝ่ายสหเวชศาสตร์</div>
+        <div style={{ fontSize: 13, color: "var(--sub)", marginTop: 4 }}>โรงพยาบาลธรรมศาสตร์เฉลิมพระเกียรติ · ISO 15189:2022</div>
+      </div>
+
       <div style={{ paddingBottom: 26, borderBottom: "1px solid var(--line2)" }}>
-        <div style={{ fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".24em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12 }}>User Guide</div>
-        <h1 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "clamp(1.8rem,3.8vw,2.8rem)", letterSpacing: "-.02em", lineHeight: 1, margin: 0 }}>คู่มือการใช้งาน</h1>
-        <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".24em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12 }}>User Guide</div>
+            <h1 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "clamp(1.8rem,3.8vw,2.8rem)", letterSpacing: "-.02em", lineHeight: 1, margin: 0 }}>คู่มือการใช้งาน</h1>
+            <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
+          </div>
+          <PrintGuideButton />
+        </div>
       </div>
 
       <div style={{ marginTop: 28, display: "flex", gap: 14, alignItems: "flex-start", background: "var(--surface)", border: "1px solid var(--amber)", borderRadius: 3, padding: "16px 18px" }}>
@@ -123,6 +136,8 @@ export default async function GuidePage() {
           ))}
         </div>
       </section>
+
+      <ArchitectureGuide />
 
       {user.role === "SYSADMIN" && (
         <section style={{ marginTop: 44, borderTop: "1px solid var(--line2)", paddingTop: 36, marginBottom: 8 }}>
