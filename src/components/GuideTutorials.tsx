@@ -311,6 +311,159 @@ export function RegisterTutorial() {
   );
 }
 
+/* ---------- section: สถาปัตยกรรมระบบ (สำหรับ Programmer / IT) ---------- */
+
+const STACK: { layer: string; name: string; desc: string }[] = [
+  { layer: "Frontend", name: "Next.js 16 · React 19", desc: "App Router — Server Components เรนเดอร์ฝั่งเซิร์ฟเวอร์ ลดโค้ดที่ส่งไปเบราว์เซอร์" },
+  { layer: "Backend", name: "Server Actions", desc: "ลอจิกฝั่งเซิร์ฟเวอร์เรียกตรงจากฟอร์ม ไม่ต้องเขียน REST endpoint แยก" },
+  { layer: "ORM", name: "Prisma 7", desc: "ชั้นเข้าถึงฐานข้อมูลแบบ type-safe ผูกกับ schema เดียวทั้งระบบ" },
+  { layer: "Database", name: "PostgreSQL", desc: "เก็บเอกสาร เวอร์ชัน การรับทราบ ผู้ใช้ และ audit log" },
+  { layer: "Auth", name: "jose (JWT) · bcrypt", desc: "เซสชันเป็น JWT ลงนาม/เข้ารหัสด้วย jose · รหัสผ่านแฮชด้วย bcrypt" },
+  { layer: "Deploy", name: "Docker · Caddy · VPS", desc: "รันเป็นคอนเทนเนอร์หลัง Caddy (HTTPS อัตโนมัติ) สำรองข้อมูลขึ้น Google Drive ทุกวัน" },
+];
+
+const DATA_MODEL: { name: string; th: string }[] = [
+  { name: "Document", th: "เอกสารควบคุมแต่ละฉบับ (รหัส สถานะ ประเภท งาน/หมวด)" },
+  { name: "Revision", th: "ประวัติการแก้ไข/เวอร์ชันของเอกสาร" },
+  { name: "Attachment", th: "ไฟล์แนบจริงและลิงก์ระบบภายนอก" },
+  { name: "Acknowledgement", th: "บันทึกการอ่าน/รับทราบรายบุคคล" },
+  { name: "User · Work · Category", th: "ผู้ใช้ บทบาท งาน และหมวดงาน" },
+  { name: "AuditLog", th: "ร่องรอยการกระทำทุกครั้งเพื่อการตรวจประเมิน" },
+];
+
+const REQ_FLOW: { t: string; d: string }[] = [
+  { t: "ผู้ใช้กดบันทึกฟอร์ม", d: "ฟอร์มเรียก Server Action โดยตรง (ไม่ผ่าน REST)" },
+  { t: "ตรวจเซสชัน + สิทธิ์", d: "อ่าน JWT, เช็ก can(role, action) ก่อนทำงาน" },
+  { t: "Prisma เขียนฐานข้อมูล", d: "สร้างแถวเอกสาร + เขียน AuditLog ในทรานแซกชัน" },
+  { t: "revalidate + รีเฟรช", d: "Next.js รีเฟรชหน้าเซิร์ฟเวอร์ ผู้ใช้เห็นผลทันที" },
+];
+
+const archNodeBox: React.CSSProperties = {
+  position: "relative",
+  flex: "1 1 0",
+  minWidth: 120,
+  textAlign: "center",
+  background: "var(--surface)",
+  border: "1px solid var(--accent2)",
+  borderRadius: 3,
+  padding: "16px 12px",
+};
+const archLabel: React.CSSProperties = { fontFamily: "var(--display)", fontWeight: 600, fontSize: 14, color: "var(--text)" };
+const archSub: React.CSSProperties = { fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--muted)", letterSpacing: ".03em", marginTop: 3 };
+
+function ArchNode({ title, sub, ripple = false }: { title: string; sub: string; ripple?: boolean }) {
+  return (
+    <div style={archNodeBox}>
+      <div style={{ position: "relative", width: 34, height: 34, margin: "0 auto 9px" }}>
+        {ripple && <span aria-hidden style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "2px solid var(--accent)", animation: "ripple 2.4s ease-out infinite" }} />}
+        <span aria-hidden style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--accent-dim)", border: "1px solid var(--accent2)" }} />
+      </div>
+      <div style={archLabel}>{title}</div>
+      <div style={archSub}>{sub}</div>
+    </div>
+  );
+}
+
+function ArchArrow({ label }: { label?: string }) {
+  return (
+    <div className="no-print" style={{ flex: "0 0 46px", alignSelf: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 0 }}>
+      {label && <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--muted)", whiteSpace: "nowrap" }}>{label}</span>}
+      <div style={{ position: "relative", width: "100%", height: 2 }}>
+        <span aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(90deg, var(--accent) 0 7px, transparent 7px 15px)", animation: "flowDash .9s linear infinite" }} />
+        <span aria-hidden style={{ position: "absolute", right: -1, top: "50%", width: 0, height: 0, transform: "translateY(-50%)", borderTop: "4px solid transparent", borderBottom: "4px solid transparent", borderLeft: "6px solid var(--accent)" }} />
+      </div>
+    </div>
+  );
+}
+
+export function ArchitectureGuide() {
+  return (
+    <section className="guide-section" style={{ marginTop: 44, borderTop: "1px solid var(--line2)", paddingTop: 36 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 6 }}>
+        <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: 0 }}>การทำงานของระบบ (สำหรับ Programmer / เจ้าหน้าที่ IT)</h2>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>Architecture</span>
+      </div>
+      <p style={{ fontSize: 14, color: "var(--sub)", margin: "0 0 24px", maxWidth: "72ch", lineHeight: 1.7 }}>
+        ภาพรวมทางเทคนิคสำหรับผู้พัฒนาและเจ้าหน้าที่ไอที — ชุดเทคโนโลยี โครงสร้างข้อมูล เส้นทางการทำงานของหนึ่งคำขอ และการเชื่อมต่อกับระบบทะเบียนเอกสารงานเทคนิคการแพทย์ (MedTech) ผ่าน SSO
+      </p>
+
+      {/* stack */}
+      <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 15, color: "var(--text)", margin: "0 0 12px" }}>ชุดเทคโนโลยี (Technology Stack)</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(215px,1fr))", gap: 1, background: "var(--line)", border: "1px solid var(--line)", marginBottom: 30 }}>
+        {STACK.map((s) => (
+          <div key={s.layer} style={{ background: "var(--bg)", padding: "16px 16px 18px" }}>
+            <div style={{ fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 7 }}>{s.layer}</div>
+            <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 14.5, color: "var(--text)", marginBottom: 5 }}>{s.name}</div>
+            <div style={{ fontSize: 13, color: "var(--sub)", lineHeight: 1.6 }}>{s.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* architecture diagram */}
+      <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 15, color: "var(--text)", margin: "0 0 12px" }}>แผนผังสถาปัตยกรรม</div>
+      <div style={{ ...panel, padding: "20px 18px" }}>
+        <div style={{ display: "flex", alignItems: "stretch", gap: 4, flexWrap: "wrap" }}>
+          <ArchNode title="เบราว์เซอร์" sub="React 19" />
+          <ArchArrow label="HTTPS" />
+          <ArchNode title="Next.js Server" sub="Server Actions" ripple />
+          <ArchArrow label="Prisma" />
+          <ArchNode title="PostgreSQL" sub="database" ripple />
+          <ArchArrow label="/api/files" />
+          <ArchNode title="ไฟล์แนบ" sub="uploads volume" />
+        </div>
+        <p style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)", margin: "16px 0 0", lineHeight: 1.6 }}>
+          เรนเดอร์ + ลอจิกอยู่ฝั่งเซิร์ฟเวอร์เดียว (SSR) ในคอนเทนเนอร์ Docker หลัง Caddy — ไฟล์แนบเสิร์ฟผ่าน route /api/files ที่ตรวจสิทธิ์ก่อนส่งทุกครั้ง
+        </p>
+      </div>
+
+      {/* request lifecycle */}
+      <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 15, color: "var(--text)", margin: "30px 0 12px" }}>เส้นทางการทำงานของหนึ่งคำขอ — “ลงทะเบียนเอกสาร”</div>
+      <div className="no-print" style={{ position: "relative", height: 3, borderRadius: 2, background: "var(--hi)", margin: "0 0 18px", overflow: "hidden" }}>
+        <span aria-hidden style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", width: 46, height: 3, borderRadius: 2, background: "linear-gradient(90deg, transparent, var(--accent))", animation: "travel 3s ease-in-out infinite" }} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(165px,1fr))", gap: 14, marginBottom: 30 }}>
+        {REQ_FLOW.map((s, i) => (
+          <div key={s.t} style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ display: "grid", placeItems: "center", flex: "0 0 auto", width: 22, height: 22, borderRadius: "50%", background: "var(--accent)", color: "var(--accent-ink)", fontFamily: "var(--mono)", fontSize: 11, fontWeight: 600 }}>{i + 1}</span>
+              <span aria-hidden style={{ flex: 1, height: 2, borderRadius: 1, background: "var(--accent2)", transformOrigin: "left", animation: "barGrow .5s ease both", animationDelay: `${i * 0.12}s` }} />
+            </div>
+            <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 13.5, color: "var(--text)", marginBottom: 4 }}>{s.t}</div>
+            <div style={{ fontSize: 12.5, color: "var(--sub)", lineHeight: 1.55 }}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* data model */}
+      <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 15, color: "var(--text)", margin: "0 0 12px" }}>โครงสร้างข้อมูลหลัก (Data Model)</div>
+      <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden", marginBottom: 30 }}>
+        {DATA_MODEL.map((m, i) => (
+          <div key={m.name} style={{ display: "flex", gap: 14, alignItems: "baseline", padding: "12px 16px", borderBottom: i === DATA_MODEL.length - 1 ? "none" : "1px solid var(--line)", flexWrap: "wrap" }}>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 12.5, fontWeight: 600, color: "var(--accent)", flex: "0 0 auto", minWidth: 168 }}>{m.name}</span>
+            <span style={{ fontSize: 13.5, color: "var(--sub)", lineHeight: 1.55 }}>{m.th}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* security + SSO */}
+      <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 15, color: "var(--text)", margin: "0 0 12px" }}>ความปลอดภัยและการเชื่อมต่อระบบ MedTech (SSO)</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 12 }}>
+        {[
+          { t: "RBAC ตามบทบาท", d: "ทุก Server Action ตรวจ can(role, action) — 7 บทบาทมีสิทธิ์ต่างกันตามตารางด้านบน" },
+          { t: "JWT + bcrypt", d: "เซสชันลงนามด้วย jose มีวันหมดอายุ · รหัสผ่านเก็บเป็น bcrypt hash เท่านั้น" },
+          { t: "เชื่อม MedTech ผ่าน SSO", d: "เลือกงานเทคนิคการแพทย์ ระบบออก token ลงนามด้วย SSO_SHARED_SECRET พาเข้าระบบ Lab QMS อัตโนมัติ" },
+          { t: "สำรองข้อมูลอัตโนมัติ", d: "Cron ทุกวันเวลา 00:00 น. ส่งฐานข้อมูลและไฟล์แนบขึ้น Google Drive (เก็บย้อนหลัง 30 วัน)" },
+        ].map((x) => (
+          <div key={x.t} style={{ background: "var(--surface)", border: "1px solid var(--line2)", borderRadius: 3, padding: "14px 16px" }}>
+            <div style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 14, color: "var(--text)", marginBottom: 5 }}>{x.t}</div>
+            <div style={{ fontSize: 13, color: "var(--sub)", lineHeight: 1.6 }}>{x.d}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /* ---------- section: อัพโหลดไฟล์แนบ ---------- */
 
 export function UploadTutorial() {
