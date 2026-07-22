@@ -239,10 +239,88 @@ textarea {
     opacity: 0;
   }
 }
+/* Architecture diagram motion (guide – ส่วน IT) */
+@keyframes flowDash {
+  to {
+    background-position: 18px 0;
+  }
+}
+@keyframes ripple {
+  0% {
+    transform: scale(0.75);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@keyframes travel {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/* พิมพ์คู่มือเป็น PDF — พิมพ์เฉพาะเนื้อหาคู่มือ (#guide-doc) */
+.print-only {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #guide-doc,
+  #guide-doc * {
+    visibility: visible;
+  }
+  #guide-doc {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  #guide-doc * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .guide-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
