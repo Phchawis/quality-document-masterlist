@@ -12,7 +12,7 @@ export const DOC_INCLUDE = {
   subCategory: true,
   attachments: { orderBy: { createdAt: "asc" } },
   revisions: { orderBy: { version: "desc" } },
-  acks: { include: { user: true }, orderBy: { createdAt: "desc" } },
+  acks: { include: { user: true }, orderBy: { createdAt: "desc" }, take: 12 },
 } as const;
 
 export async function getDocumentById(id: string) {
@@ -37,11 +37,14 @@ export function buildDocWhere(sp: MasterlistParams, userId?: string): PrismaNS.D
   if (sp.type && sp.type !== "ALL") where.typeCode = sp.type;
   if (sp.cat && sp.cat !== "ALL") where.categoryCode = sp.cat;
   if (sp.sub && sp.sub !== "ALL") where.subCategory = { name: sp.sub };
-  if (sp.status && sp.status !== "ALL") where.status = sp.status as DocStatus;
+  // รับเฉพาะสถานะที่ถูกต้อง — ค่าอื่น (เช่น ?status=FOO) จะถูกเมิน ไม่ส่งให้ Prisma โยน invalid enum
+  const VALID_STATUS = new Set(["DRAFT", "REVIEW", "ACTIVE", "OBSOLETE"]);
+  if (sp.status && sp.status !== "ALL" && VALID_STATUS.has(sp.status)) where.status = sp.status as DocStatus;
   if (q) where.OR = [{ code: { contains: q, mode: "insensitive" } }, { title: { contains: q, mode: "insensitive" } }];
   if (sp.ack === "1" && userId) {
     where.status = "ACTIVE";
     where.typeCode = { in: ACK_TYPES };
+    where.workId = { not: "MEDTECH" }; // ให้ตรงกับ badge หัวข้อและการ์ดแดชบอร์ด
     where.acks = { none: { userId } };
   }
   return where;

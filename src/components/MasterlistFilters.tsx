@@ -11,6 +11,8 @@ import { getMedtechLink } from "@/app/actions/sso";
 // ทำให้เราถือ handle ของแท็บใหม่ไว้ตั้งค่า location ทีหลังไม่ได้เลย
 async function openMedtech() {
   const win = window.open("", "_blank");
+  // ตัด window.opener ทิ้ง — กัน reverse tabnabbing (หน้าปลายทางเปลี่ยน URL ของแท็บนี้ไม่ได้)
+  if (win) win.opener = null;
   const url = await getMedtechLink();
   if (!win) return;
   if (url) win.location.href = url;

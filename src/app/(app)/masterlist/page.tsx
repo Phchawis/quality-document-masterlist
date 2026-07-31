@@ -79,7 +79,7 @@ export default async function MasterlistPage({ searchParams }: { searchParams: P
   if (type !== "ALL") activeChips.push({ label: `ประเภท · ${type}`, clear: clearOne("type") });
   if (cat !== "ALL") activeChips.push({ label: `หมวด · ${cat}`, clear: clearOne("cat") });
   if (sub !== "ALL") activeChips.push({ label: `ย่อย · ${sub}`, clear: clearOne("sub") });
-  if (status !== "ALL") activeChips.push({ label: `สถานะ · ${STATUS_META[status as DocStatus].th}`, clear: clearOne("status") });
+  if (status !== "ALL" && STATUS_META[status as DocStatus]) activeChips.push({ label: `สถานะ · ${STATUS_META[status as DocStatus].th}`, clear: clearOne("status") });
   if (ackOnly) activeChips.push({ label: "รอรับทราบของฉัน", clear: clearOne("ack") });
 
   const rangeText = total ? `${(page - 1) * PER_PAGE + 1}–${Math.min(page * PER_PAGE, total)} จาก ${total}` : "0";

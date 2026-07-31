@@ -7,9 +7,12 @@ import { STATUS_META, WORKS, CATEGORIES, KIND_META, beDate } from "@/lib/referen
 export const dynamic = "force-dynamic";
 
 function csvCell(v: string | number | null | undefined): string {
-  const s = String(v ?? "");
-  // Quote if it contains comma, quote, or newline; escape quotes by doubling.
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  let s = String(v ?? "");
+  // กัน CSV formula injection: ถ้าเซลล์ขึ้นต้นด้วย = + - @ หรือ tab/CR ให้ใส่ ' นำหน้า
+  // (ชื่อเอกสารเช่น =HYPERLINK(...) จะไม่ทำงานเป็นสูตรตอนเปิดใน Excel)
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  // ใส่ quote ถ้ามี comma / quote / newline และ escape quote ด้วยการทำซ้ำ
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 // Exports the current (filtered) masterlist as an Excel-openable CSV.
@@ -24,6 +27,7 @@ export async function GET(req: NextRequest) {
   const docs = await prisma.document.findMany({
     where,
     orderBy,
+    take: 10000, // กันดึงทั้งตารางเข้าหน่วยความจำเมื่อเอกสารเยอะมาก
     include: { type: true, work: true, category: true, subCategory: true, attachments: true, _count: { select: { acks: true } } },
   });
 

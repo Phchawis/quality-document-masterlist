@@ -12,6 +12,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# NEXT_PUBLIC_* ถูกฝังลงในโค้ดตอน build จึงต้องส่งเข้ามาเป็น build arg
+# (ตั้งค่าใน .env แล้ว compose ส่งต่อให้ — ดู docker-compose.yml)
+ARG NEXT_PUBLIC_MEDTECH_URL
+ENV NEXT_PUBLIC_MEDTECH_URL=$NEXT_PUBLIC_MEDTECH_URL
 RUN npx prisma generate
 RUN npm run build
 

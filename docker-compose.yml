@@ -43,6 +43,9 @@ services:
     build:
       context: .
       target: runner
+      args:
+        # URL ของระบบ MedTech (Wedapp LAB) — ฝังตอน build เปลี่ยนแล้วต้อง build ใหม่
+        NEXT_PUBLIC_MEDTECH_URL: ${NEXT_PUBLIC_MEDTECH_URL:-}
     restart: unless-stopped
     depends_on:
       db:
@@ -53,6 +56,9 @@ services:
       DATABASE_URL: postgresql://masterlist:${DB_PASSWORD:-masterlist_prod}@db:5432/masterlist
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
       UPLOAD_DIR: /app/uploads
+      # กุญแจลงนามลิงก์ SSO ไประบบ MedTech — ต้องตรงกับฝั่งนั้นเป๊ะ
+      # (ปล่อยว่างได้ = ปิดการเข้าสู่ระบบอัตโนมัติ ผู้ใช้ไปล็อกอินเองที่ปลายทาง)
+      SSO_SHARED_SECRET: ${SSO_SHARED_SECRET:-}
     volumes:
       - uploads:/app/uploads
 
@@ -66,6 +72,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # จำเป็นบน Linux: ให้ Caddy resolve host.docker.internal ได้ (ใช้ route ไปบริการอื่นบนโฮสต์ เช่น ahs-personnel:8201)
+    # ถ้าขาดบรรทัดนี้ พอ Caddy ถูกสร้างใหม่จะ proxy ไปบริการเหล่านั้นไม่ได้ → 502
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN in .env, e.g. example.duckdns.org}
     volumes:

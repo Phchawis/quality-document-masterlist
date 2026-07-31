@@ -144,7 +144,8 @@ model Revision {
   byName     String
   createdAt  DateTime @default(now())
 
-  @@index([documentId, version])
+  // 1 เอกสาร มีได้เวอร์ชันละ 1 แถวเท่านั้น — กันเวอร์ชันซ้ำจาก race (คู่กับ optimistic lock ในโค้ด)
+  @@unique([documentId, version])
 }
 
 enum AttachmentKind {
@@ -200,4 +201,5 @@ model AuditLog {
 
   @@index([documentId])
   @@index([createdAt])
+  @@index([action, createdAt]) // หน้า audit กรอง/จัดกลุ่มตาม action — ให้ query ใช้ index ได้
 }

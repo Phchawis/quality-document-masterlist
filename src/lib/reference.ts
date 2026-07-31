@@ -17,13 +17,21 @@ export const DOC_TYPES = [
 
 // externalUrl: งานที่มีทะเบียนเอกสารแยกเป็นระบบของตัวเอง — Masterlist ไม่เก็บเอกสารของงานนี้
 // ในฐานข้อมูล ลิงก์ออกไปยังระบบนั้นแทนการกรองภายในหน้า Masterlist
+//
+// ที่อยู่ของระบบ Lab QMS ตั้งผ่าน env ได้ เพื่อให้ย้ายโฮสต์ได้โดยไม่ต้องแก้โค้ด
+// ใช้ NEXT_PUBLIC_ เพราะไฟล์นี้ถูก import ทั้งฝั่ง server และ client component
+// (ตัวแปรที่ไม่มี NEXT_PUBLIC_ จะเป็น undefined ในเบราว์เซอร์ ทำให้ค่าสองฝั่งไม่ตรงกัน)
+// ค่าเริ่มต้นชี้ไปโดเมนบน VPS ที่ทีมควบคุมเอง — ห้าม fallback ไปโดเมนเดิมบน Render
+// (ถ้าปล่อย service Render ให้คนอื่นจอง subdomain คืนได้ SSO token จะรั่วไปหาคนนั้น)
+const MEDTECH_URL = process.env.NEXT_PUBLIC_MEDTECH_URL || "https://labtuhqms.duckdns.org";
+
 export const WORKS = [
   {
     id: "MEDTECH",
     code: "MT",
     nameTh: "งานห้องปฏิบัติการเทคนิคการแพทย์",
     nameEn: "Medical Technology Laboratory",
-    externalUrl: "https://tuh-lab-qms.onrender.com",
+    externalUrl: MEDTECH_URL,
   },
   { id: "TRANSFUSION", code: "TRF", nameTh: "งานเวชศาสตร์การบริการโลหิต", nameEn: "Transfusion Medicine", externalUrl: undefined },
   { id: "MICRO", code: "MCB", nameTh: "งานจุลชีววิทยา", nameEn: "Microbiology", externalUrl: undefined },

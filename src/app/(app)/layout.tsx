@@ -14,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     where: {
       status: "ACTIVE",
       typeCode: { in: ACK_TYPES },
+      workId: { not: "MEDTECH" }, // งานเทคนิคการแพทย์มีระบบรับทราบของตัวเอง — ให้ตรงกับการ์ดแดชบอร์ด
       acks: { none: { userId: user.id } },
     },
   });

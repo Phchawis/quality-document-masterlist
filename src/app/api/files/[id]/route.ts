@@ -39,6 +39,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       "Content-Type": att.mime || "application/octet-stream",
       "Content-Length": String(file.size),
       "Content-Disposition": `${disposition}; filename*=UTF-8''${encoded}`,
+      // กันเบราว์เซอร์เดา content-type แล้วรันไฟล์ (ไม่พึ่ง header จาก reverse proxy อย่างเดียว)
+      "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },
   });

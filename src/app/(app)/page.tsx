@@ -44,7 +44,7 @@ export default async function DashboardPage() {
     }),
     prisma.document.findMany({ where: { status: "ACTIVE", ...NOT_MEDTECH }, orderBy: { effectiveAt: "desc" }, take: 6 }),
     prisma.$queryRaw<{ yr: number; n: bigint }[]>`
-      SELECT EXTRACT(YEAR FROM "effectiveAt")::int AS yr, COUNT(*) AS n
+      SELECT EXTRACT(YEAR FROM ("effectiveAt" AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Bangkok'))::int AS yr, COUNT(*) AS n
       FROM "Document" WHERE "effectiveAt" IS NOT NULL AND "workId" != 'MEDTECH'
       GROUP BY yr ORDER BY yr`,
   ]);

@@ -22,14 +22,16 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
   const work = WORKS.find((w) => w.id === doc.workId);
   const category = CATEGORIES.find((c) => c.code === doc.categoryCode);
   const st = STATUS_META[doc.status];
-  const ackByMe = doc.acks.some((a) => a.userId === user.id);
   const isMedTech = doc.workId === "MEDTECH";
 
   // Ack scope = active users in the same work (fallback to all active users).
-  const [ackScope, ackDoneCount] = await Promise.all([
+  // ackByMe ถามตรงจาก DB — ไม่พึ่ง doc.acks ที่ถูกจำกัดจำนวน (take) เพื่อประสิทธิภาพ
+  const [ackScope, ackDoneCount, myAck] = await Promise.all([
     prisma.user.count({ where: { isActive: true, ...(doc.workId ? { workId: doc.workId } : {}) } }),
     prisma.acknowledgement.count({ where: { documentId: doc.id } }),
+    prisma.acknowledgement.findFirst({ where: { documentId: doc.id, userId: user.id }, select: { id: true } }),
   ]);
+  const ackByMe = myAck !== null;
   const scope = Math.max(ackScope, ackDoneCount, 1);
   const ackPct = Math.round((ackDoneCount / scope) * 100);
 

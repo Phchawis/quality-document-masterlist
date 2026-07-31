@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { can, canUserEdit, WORKS, KIND_META } from "@/lib/reference";
+import { can, canUserEdit, WORKS, KIND_META, ACK_TYPES } from "@/lib/reference";
 import { saveUpload, deleteStored } from "@/lib/storage";
 import type { AttachmentKind } from "@/generated/prisma/enums";
 
@@ -35,8 +35,15 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
   const work = WORKS.find((w) => w.id === workId);
   if (!work) return { ok: false, error: "งานไม่ถูกต้อง" };
   if (kinds.length === 0) return { ok: false, error: "กรุณาเลือกรูปแบบไฟล์แนบอย่างน้อย 1 แบบ" };
+  // ตรวจว่ารูปแบบไฟล์แนบทุกค่าถูกต้อง — กัน KIND_META[kind] undefined แล้ว crash เป็น 500
+  if (!kinds.every((k) => k in KIND_META)) return { ok: false, error: "รูปแบบไฟล์แนบไม่ถูกต้อง" };
   if (!RETENTION_YEARS.includes(retentionYears)) return { ok: false, error: "ระยะเวลาจัดเก็บไม่ถูกต้อง" };
   const categoryCode = workId === "MEDTECH" ? catRaw || null : null;
+  // ตรวจหมวดงานว่ามีจริง (เฉพาะงานเทคนิคการแพทย์) — กัน FK error
+  if (categoryCode) {
+    const catRec = await prisma.category.findUnique({ where: { code: categoryCode } });
+    if (!catRec) return { ok: false, error: "หมวดงานไม่ถูกต้อง" };
+  }
 
   // Optional subcategory (only valid under a MEDTECH category that has one).
   const subName = String(formData.get("sub") || "").trim();
@@ -48,39 +55,54 @@ export async function registerDocument(formData: FormData): Promise<ActionResult
     subCategoryId = subRec?.id ?? null;
   }
 
+  // ตรวจประเภทเอกสารว่ามีจริง — กัน FK error กลายเป็น 500
+  const typeMeta = await prisma.docType.findUnique({ where: { code: typeCode } });
+  if (!typeMeta) return { ok: false, error: "ประเภทเอกสารไม่ถูกต้อง" };
+
   const codeExists = await prisma.document.findUnique({ where: { code } });
   if (codeExists) return { ok: false, error: `รหัสเอกสาร ${code} มีอยู่แล้ว` };
 
-  const typeMeta = await prisma.docType.findUnique({ where: { code: typeCode } });
+  // กำหนดทบทวนถัดไป: นับปีจริง (setFullYear) ไม่ใช่ 365 วันคงที่ — กันคลาดวันครบรอบ
   const now = new Date();
+  const nextReview = new Date(now);
+  nextReview.setFullYear(nextReview.getFullYear() + retentionYears);
 
-  const doc = await prisma.document.create({
-    data: {
-      code,
-      running: 1,
-      title,
-      typeCode,
-      workId,
-      categoryCode,
-      subCategoryId,
-      status: "DRAFT",
-      version: 1,
-      description: "เอกสารลงทะเบียนใหม่ · รอตรวจสอบและประกาศใช้",
-      controlled: typeMeta?.controlled ?? true,
-      nextReviewAt: new Date(now.getTime() + retentionYears * 365 * 86400000),
-      ownerId: user.id,
-      ownerName: user.fullName,
-      approverName: "",
-      revisions: { create: { version: 1, byId: user.id, byName: user.fullName, note: "ลงทะเบียนเอกสารครั้งแรก" } },
-      attachments: {
-        create: kinds.map((kind) => ({
-          kind,
-          filename: kind === "URL" ? `${code} · ระบบสารสนเทศ` : `${code}.${KIND_META[kind].ext}`,
-          note: "รายการเริ่มต้น · แนบไฟล์จริงได้ในหน้ารายละเอียด",
-        })),
+  let doc;
+  try {
+    doc = await prisma.document.create({
+      data: {
+        code,
+        running: 1,
+        title,
+        typeCode,
+        workId,
+        categoryCode,
+        subCategoryId,
+        status: "DRAFT",
+        version: 1,
+        description: "เอกสารลงทะเบียนใหม่ · รอตรวจสอบและประกาศใช้",
+        controlled: typeMeta?.controlled ?? true,
+        nextReviewAt: nextReview,
+        ownerId: user.id,
+        ownerName: user.fullName,
+        approverName: "",
+        revisions: { create: { version: 1, byId: user.id, byName: user.fullName, note: "ลงทะเบียนเอกสารครั้งแรก" } },
+        attachments: {
+          create: kinds.map((kind) => ({
+            kind,
+            filename: kind === "URL" ? `${code} · ระบบสารสนเทศ` : `${code}.${KIND_META[kind].ext}`,
+            note: "รายการเริ่มต้น · แนบไฟล์จริงได้ในหน้ารายละเอียด",
+          })),
+        },
       },
-    },
-  });
+    });
+  } catch (e: unknown) {
+    // ลงรหัสซ้ำพร้อมกัน 2 คน (unique violation) — ตอบข้อความอ่านง่ายแทน 500
+    if (e && typeof e === "object" && "code" in e && (e as { code?: string }).code === "P2002") {
+      return { ok: false, error: `รหัสเอกสาร ${code} มีอยู่แล้ว` };
+    }
+    throw e;
+  }
 
   await log(user.id, user.fullName, "REGISTER_DOC", doc.id, `ลงทะเบียน ${code}`);
   revalidatePath("/masterlist");
@@ -97,15 +119,22 @@ export async function reviseDocument(documentId: string, note: string): Promise<
   if (doc.status === "OBSOLETE") return { ok: false, error: "เอกสารถูกยกเลิกแล้ว" };
 
   const nv = doc.version + 1;
-  await prisma.document.update({
-    where: { id: documentId },
-    data: {
-      version: nv,
-      revisedAt: new Date(),
-      status: doc.status === "DRAFT" ? "DRAFT" : "ACTIVE",
-      revisions: { create: { version: nv, byId: user.id, byName: user.fullName, note: note || "ปรับปรุงแก้ไขเอกสาร" } },
-    },
+  // แก้แบบ optimistic lock ในทรานแซกชัน — กัน 2 คนกดพร้อมกันแล้วได้เวอร์ชันซ้ำ/เพิ่มเลขเพี้ยน
+  // (updateMany where version=ปัจจุบัน: ถ้ามีคนแก้ไปก่อน count=0 → ยกเลิก ให้ลองใหม่)
+  // ไม่เลื่อนสถานะขึ้น ACTIVE เอง — การประกาศใช้ต้องทำผ่าน "ประกาศใช้" (publish) เท่านั้น
+  const done = await prisma.$transaction(async (tx) => {
+    const upd = await tx.document.updateMany({
+      where: { id: documentId, version: doc.version },
+      data: { version: nv, revisedAt: new Date(), status: doc.status },
+    });
+    if (upd.count === 0) return false;
+    await tx.revision.create({
+      data: { documentId, version: nv, byId: user.id, byName: user.fullName, note: note || "ปรับปรุงแก้ไขเอกสาร" },
+    });
+    return true;
   });
+  if (!done) return { ok: false, error: "เอกสารถูกแก้ไขโดยผู้อื่นพอดี กรุณารีเฟรชแล้วลองใหม่" };
+
   await log(user.id, user.fullName, "REVISE", documentId, `แก้ไขเป็น v.${String(nv).padStart(2, "0")}`);
   revalidatePath(`/documents/${documentId}`);
   revalidatePath("/masterlist");
@@ -118,6 +147,10 @@ export async function publishDocument(documentId: string): Promise<ActionResult>
   if (!user || !canUserEdit(user, "publish")) return { ok: false, error: "ไม่มีสิทธิ์ประกาศใช้" };
   const doc = await prisma.document.findUnique({ where: { id: documentId } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
+  // ประกาศใช้ได้เฉพาะฉบับร่าง/ระหว่างทบทวนเท่านั้น
+  // กันปลุกเอกสารที่ยกเลิกแล้วกลับมาใช้ และกันประกาศซ้ำเอกสารที่ใช้อยู่แล้ว (เรียก action ตรง ๆ)
+  if (doc.status === "OBSOLETE") return { ok: false, error: "เอกสารถูกยกเลิกแล้ว ไม่สามารถประกาศใช้ได้" };
+  if (doc.status === "ACTIVE") return { ok: false, error: "เอกสารนี้ประกาศใช้อยู่แล้ว" };
 
   const work = WORKS.find((w) => w.id === doc.workId);
   await prisma.document.update({
@@ -144,10 +177,11 @@ export async function deleteDocument(documentId: string): Promise<ActionResult> 
   if (doc.status !== "DRAFT") return { ok: false, error: "ลบได้เฉพาะเอกสารสถานะฉบับร่างเท่านั้น (เอกสารที่เคยประกาศใช้ให้ใช้ปุ่มยกเลิกการใช้งานแทน)" };
   if (doc.acks.length > 0) return { ok: false, error: "มีผู้รับทราบเอกสารนี้แล้ว ไม่สามารถลบได้" };
 
+  // ลบ record ก่อน (attachments ลบตามด้วย cascade) แล้วค่อยลบไฟล์จริง — กันไฟล์หายแต่ record ค้าง
+  await prisma.document.delete({ where: { id: documentId } });
   for (const att of doc.attachments) {
     if (att.storedName) await deleteStored(att.storedName);
   }
-  await prisma.document.delete({ where: { id: documentId } });
   await log(user.id, user.fullName, "DELETE_DOC", null, `ลบเอกสาร ${doc.code} · ${doc.title}`);
   revalidatePath("/masterlist");
   revalidatePath("/");
@@ -173,6 +207,9 @@ export async function acknowledgeDocument(documentId: string): Promise<ActionRes
   if (!user || !can(user.role, "acknowledge")) return { ok: false, error: "ไม่มีสิทธิ์รับทราบ" };
   const doc = await prisma.document.findUnique({ where: { id: documentId } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
+  // รับทราบได้เฉพาะเอกสารที่ประกาศใช้ และเป็นประเภทที่ต้องรับทราบ (QM/SOP/WI)
+  if (doc.status !== "ACTIVE") return { ok: false, error: "รับทราบได้เฉพาะเอกสารที่ประกาศใช้แล้ว" };
+  if (!ACK_TYPES.includes(doc.typeCode)) return { ok: false, error: "เอกสารประเภทนี้ไม่ต้องลงนามรับทราบ" };
 
   await prisma.acknowledgement.upsert({
     where: { documentId_userId: { documentId, userId: user.id } },
@@ -190,23 +227,28 @@ export async function acknowledgeDocuments(documentIds: string[]): Promise<Actio
   if (!user || !can(user.role, "acknowledge")) return { ok: false, error: "ไม่มีสิทธิ์รับทราบ" };
   if (!documentIds.length) return { ok: false, error: "กรุณาเลือกเอกสารที่ต้องการรับทราบ" };
 
+  // จำกัดจำนวนต่อครั้ง กัน payload/transaction ใหญ่จนล่ม และเช็กประเภทที่ต้องรับทราบฝั่ง server ด้วย
+  const ids = documentIds.slice(0, 500);
   const docs = await prisma.document.findMany({
-    where: { id: { in: documentIds }, status: "ACTIVE" }
+    where: { id: { in: ids }, status: "ACTIVE", typeCode: { in: ACK_TYPES } },
   });
+  if (!docs.length) return { ok: true };
 
-  await prisma.$transaction(
-    docs.map((doc) =>
+  // รับทราบ + บันทึก audit ในทรานแซกชันเดียว — ให้ทะเบียนกับ audit trail ตรงกันเสมอ
+  await prisma.$transaction([
+    ...docs.map((doc) =>
       prisma.acknowledgement.upsert({
         where: { documentId_userId: { documentId: doc.id, userId: user.id } },
         update: { version: doc.version },
         create: { documentId: doc.id, userId: user.id, version: doc.version },
-      })
-    )
-  );
-
-  for (const doc of docs) {
-    await log(user.id, user.fullName, "ACK", doc.id, `รับทราบ ${doc.code} v.${doc.version}`);
-  }
+      }),
+    ),
+    ...docs.map((doc) =>
+      prisma.auditLog.create({
+        data: { userId: user.id, userName: user.fullName, action: "ACK", documentId: doc.id, detail: `รับทราบ ${doc.code} v.${doc.version}` },
+      }),
+    ),
+  ]);
 
   revalidatePath("/masterlist");
   revalidatePath("/");
@@ -268,8 +310,9 @@ export async function removeAttachment(attachmentId: string): Promise<ActionResu
   if (!user || !canUserEdit(user, "upload")) return { ok: false, error: "ไม่มีสิทธิ์" };
   const att = await prisma.attachment.findUnique({ where: { id: attachmentId } });
   if (!att) return { ok: false, error: "ไม่พบไฟล์แนบ" };
-  if (att.storedName) await deleteStored(att.storedName);
+  // ลบ record ก่อน แล้วค่อยลบไฟล์จริง — ถ้าลบ DB พลาด ไฟล์ยังอยู่ (ไม่เกิดสภาพ record ชี้ไฟล์ที่หาย)
   await prisma.attachment.delete({ where: { id: attachmentId } });
+  if (att.storedName) await deleteStored(att.storedName);
   await log(user.id, user.fullName, "REMOVE_ATT", att.documentId, `ลบไฟล์แนบ ${att.filename}`);
   revalidatePath(`/documents/${att.documentId}`);
   return { ok: true, documentId: att.documentId };
