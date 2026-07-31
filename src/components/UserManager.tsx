@@ -29,6 +29,10 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
+    // escape ข้อความก่อนยัดลง HTML หน้าต่างพิมพ์ — กัน HTML/script injection ผ่านชื่อ/username
+    const esc = (s: string) =>
+      String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+
     const rowsHtml = users
       .map((u, i) => {
         const roleName = ROLE_META[u.role].th.replace(/\s*\(.*\)/, "");
@@ -38,10 +42,10 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
         return `
           <tr>
             <td style="text-align: center; color: #718096; font-family: monospace;">${i + 1}</td>
-            <td style="font-weight: 600;">${u.fullName}</td>
-            <td style="font-family: monospace; color: #4a5568;">@${u.username}</td>
-            <td>${roleName}</td>
-            <td>${workName}</td>
+            <td style="font-weight: 600;">${esc(u.fullName)}</td>
+            <td style="font-family: monospace; color: #4a5568;">@${esc(u.username)}</td>
+            <td>${esc(roleName)}</td>
+            <td>${esc(workName)}</td>
             <td style="text-align: center;"><span class="${badgeClass}">${statusText}</span></td>
           </tr>
         `;

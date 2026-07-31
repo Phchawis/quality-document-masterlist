@@ -8,6 +8,8 @@ const MAX_AGE = 60 * 60 * 12; // 12 hours
 function secret(): Uint8Array {
   const s = process.env.SESSION_SECRET;
   if (!s) throw new Error("SESSION_SECRET is not set");
+  // กุญแจ HS256 ที่สั้นเกินไปถูก brute-force ได้ — บังคับอย่างน้อย 32 ตัวอักษร
+  if (s.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters");
   return new TextEncoder().encode(s);
 }
 

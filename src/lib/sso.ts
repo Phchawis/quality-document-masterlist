@@ -9,6 +9,8 @@ const TTL_SECONDS = 60; // อายุสั้นมาก — ลิงก์
 function secret(): Uint8Array {
   const s = process.env.SSO_SHARED_SECRET;
   if (!s) throw new Error("SSO_SHARED_SECRET is not set");
+  // กุญแจ HS256 ที่สั้นเกินไปถูก brute-force ได้ — บังคับอย่างน้อย 32 ตัวอักษร
+  if (s.length < 32) throw new Error("SSO_SHARED_SECRET must be at least 32 characters");
   return new TextEncoder().encode(s);
 }
 
