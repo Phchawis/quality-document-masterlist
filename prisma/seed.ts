@@ -56,39 +56,49 @@ async function main() {
   }
 
   // ---------- Admin + demo users ----------
-  console.log("→ Seeding users …");
-  const adminPass = process.env.ADMIN_PASSWORD || "admin1234";
-  const admin = await prisma.user.upsert({
-    where: { username: "admin" },
-    update: {},
-    create: {
-      username: "admin",
-      passwordHash: await bcrypt.hash(adminPass, 10),
-      fullName: "ทนพ.อธิป จันทร์คุณภาพ",
-      role: "SYSADMIN",
-    },
-  });
-
-  // One demo account per role, all password "demo1234", so every permission
-  // level can be exercised. Skip in a clean production seed if you prefer.
-  const demoUsers: { username: string; role: Role; fullName: string; workId?: string }[] = [
-    { username: "head.work", role: "HEAD_WORK", fullName: "ทนพญ.ศิริพร วงศ์สถิต", workId: "MEDTECH" },
-    { username: "head.cat", role: "HEAD_CAT", fullName: "ทนพ.ธนกร ภูวดล", workId: "MEDTECH" },
-    { username: "medtech", role: "MED_TECH", fullName: "ทนพ.กิตติพงษ์ แสงทอง", workId: "MEDTECH" },
-    { username: "assistant", role: "ASSISTANT", fullName: "นางสาวรัตนา ใจดี", workId: "MEDTECH" },
-    { username: "admin.staff", role: "ADMIN_STAFF", fullName: "นางสาวปาริชาต ดวงแก้ว", workId: "MEDTECH" },
-  ];
-  const demoHash = await bcrypt.hash("demo1234", 10);
-  for (const u of demoUsers) {
+  // ⚠️ บัญชีตัวอย่างทั้งหมดใช้รหัสผ่านที่รู้กันทั่วไป — ห้ามสร้างบนระบบใช้งานจริงเด็ดขาด
+  // ป้องกันสองชั้น: (1) SEED_DEMO=0 ปิดบัญชีตัวอย่างด้วย ไม่ใช่แค่เอกสารตัวอย่าง
+  //                (2) ถ้ามีผู้ใช้อยู่แล้วในระบบ = ระบบถูกใช้งานจริง ห้าม seed ทับ
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0) {
+    console.log(`✓ พบผู้ใช้งานอยู่แล้ว ${existingUsers} บัญชี — ข้ามการสร้างบัญชีตัวอย่างทั้งหมด`);
+  } else if (!SEED_DEMO) {
+    console.log("✓ SEED_DEMO=0 — ข้ามการสร้างบัญชีและเอกสารตัวอย่าง");
+  } else {
+    console.log("→ Seeding users …");
+    const adminPass = process.env.ADMIN_PASSWORD || "admin1234";
     await prisma.user.upsert({
-      where: { username: u.username },
+      where: { username: "admin" },
       update: {},
-      create: { username: u.username, passwordHash: demoHash, fullName: u.fullName, role: u.role, workId: u.workId },
+      create: {
+        username: "admin",
+        passwordHash: await bcrypt.hash(adminPass, 10),
+        fullName: "ทนพ.อธิป จันทร์คุณภาพ",
+        role: "SYSADMIN",
+      },
     });
+
+    // One demo account per role, all password "demo1234", so every permission
+    // level can be exercised. Development only.
+    const demoUsers: { username: string; role: Role; fullName: string; workId?: string }[] = [
+      { username: "head.work", role: "HEAD_WORK", fullName: "ทนพญ.ศิริพร วงศ์สถิต", workId: "MEDTECH" },
+      { username: "head.cat", role: "HEAD_CAT", fullName: "ทนพ.ธนกร ภูวดล", workId: "MEDTECH" },
+      { username: "medtech", role: "MED_TECH", fullName: "ทนพ.กิตติพงษ์ แสงทอง", workId: "MEDTECH" },
+      { username: "assistant", role: "ASSISTANT", fullName: "นางสาวรัตนา ใจดี", workId: "MEDTECH" },
+      { username: "admin.staff", role: "ADMIN_STAFF", fullName: "นางสาวปาริชาต ดวงแก้ว", workId: "MEDTECH" },
+    ];
+    const demoHash = await bcrypt.hash("demo1234", 10);
+    for (const u of demoUsers) {
+      await prisma.user.upsert({
+        where: { username: u.username },
+        update: {},
+        create: { username: u.username, passwordHash: demoHash, fullName: u.fullName, role: u.role, workId: u.workId },
+      });
+    }
   }
 
-  if (!SEED_DEMO) {
-    console.log("✓ Reference data + admin user seeded (SEED_DEMO=0, no demo documents).");
+  if (!SEED_DEMO || existingUsers > 0) {
+    console.log("✓ Reference data seeded (ข้ามเอกสารตัวอย่าง).");
     return;
   }
 
@@ -199,10 +209,9 @@ async function main() {
 
   const total = await prisma.document.count();
   console.log(`✓ Seeded ${total} demo documents.`);
-  console.log(`\nLogins:\n  admin / ${adminPass}  (ผู้ดูแลระบบ)`);
-  for (const u of demoUsers) console.log(`  ${u.username} / demo1234  (${ROLE_META[u.role].th})`);
+  console.log("\nบัญชีตัวอย่างสำหรับ dev: admin / (ADMIN_PASSWORD) · อื่น ๆ / demo1234");
   void ROLE_ORDER;
-  void admin;
+  void ROLE_META;
 }
 
 main()
