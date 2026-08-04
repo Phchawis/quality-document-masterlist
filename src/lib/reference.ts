@@ -26,6 +26,9 @@ export const DOC_TYPES = [
 const MEDTECH_URL = process.env.NEXT_PUBLIC_MEDTECH_URL || "https://labtuhqms.duckdns.org";
 
 export const WORKS = [
+  // เอกสารระดับฝ่าย ใช้ร่วมกันทุกงาน (นโยบาย คู่มือคุณภาพระดับฝ่าย ฯลฯ) — ไม่สังกัดงานใดงานหนึ่ง
+  // อยู่บนสุดเพราะเป็นระดับที่ครอบคลุมทุกงาน
+  { id: "CENTRAL", code: "AHS", nameTh: "ฝ่ายสหเวชศาสตร์", nameEn: "Allied Health Sciences", externalUrl: undefined },
   {
     id: "MEDTECH",
     code: "MT",
@@ -35,8 +38,6 @@ export const WORKS = [
   },
   { id: "TRANSFUSION", code: "TRF", nameTh: "งานเวชศาสตร์การบริการโลหิต", nameEn: "Transfusion Medicine", externalUrl: undefined },
   { id: "MICRO", code: "MCB", nameTh: "งานจุลชีววิทยา", nameEn: "Microbiology", externalUrl: undefined },
-  // เอกสารระดับฝ่าย ใช้ร่วมกันทุกงาน (นโยบาย คู่มือคุณภาพระดับฝ่าย ฯลฯ) — ไม่สังกัดงานใดงานหนึ่ง
-  { id: "CENTRAL", code: "AHS", nameTh: "เอกสารกลางฝ่ายสหเวชศาสตร์", nameEn: "Allied Health Sciences (Central)", externalUrl: undefined },
 ] as const;
 
 /** งานที่เป็น "เอกสารกลางระดับฝ่าย" — ทุกคนในฝ่ายต้องรับทราบ ไม่จำกัดเฉพาะงานใดงานหนึ่ง */
