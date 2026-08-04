@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Modal, { fieldLabel, fieldInput, fieldSelect, btnPrimary, btnGhostModal } from "./Modal";
+import PasswordField from "./PasswordField";
 import { createUser, updateUser, resetPassword, toggleActive } from "@/app/actions/users";
 import { ROLE_ORDER, ROLE_META, WORKS, initials } from "@/lib/reference";
 import type { Role } from "@/generated/prisma/enums";
@@ -334,7 +335,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
                 </select>
               </label>
             </div>
-            <label style={fieldLabel}>รหัสผ่านเริ่มต้น<input name="password" type="text" placeholder="อย่างน้อย 8 ตัวอักษร" autoComplete="new-password" style={fieldInput} /></label>
+            <label style={fieldLabel}>รหัสผ่านเริ่มต้น<PasswordField name="password" placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
             {error && <div role="alert" style={{ fontSize: 13.5, color: "var(--red)" }}>{error}</div>}
           </form>
         </Modal>
@@ -375,7 +376,7 @@ export default function UserManager({ users, readOnly = false, isAdmin = false }
           </>}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <p style={{ fontSize: 14, color: "var(--muted)", margin: 0 }}>ตั้งรหัสผ่านใหม่ให้ @{modal.pw.username} — แจ้งรหัสให้ผู้ใช้และให้เปลี่ยนภายหลัง</p>
-            <label style={fieldLabel}>รหัสผ่านใหม่<input value={pw} onChange={(e) => setPw(e.target.value)} type="text" placeholder="อย่างน้อย 8 ตัวอักษร" autoComplete="new-password" style={fieldInput} /></label>
+            <label style={fieldLabel}>รหัสผ่านใหม่<PasswordField value={pw} onChange={setPw} placeholder="อย่างน้อย 8 ตัวอักษร" autoFocus /></label>
             {error && <div role="alert" style={{ fontSize: 13.5, color: "var(--red)" }}>{error}</div>}
           </div>
         </Modal>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { loginAction, type LoginState } from "@/app/actions/auth";
+import PasswordField from "@/components/PasswordField";
 
 export default function LoginForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(loginAction, {});
-  const [show, setShow] = useState(false);
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -41,21 +41,13 @@ export default function LoginForm({ next }: { next: string }) {
       <input name="username" autoComplete="username" autoFocus aria-label="ชื่อผู้ใช้งาน" style={{ ...inputStyle, marginBottom: 20 }} />
 
       <label style={labelStyle}>รหัสผ่าน</label>
-      <div style={{ position: "relative", marginBottom: 10 }}>
-        <input
+      <div style={{ marginBottom: 10 }}>
+        <PasswordField
           name="password"
-          type={show ? "text" : "password"}
           autoComplete="current-password"
-          aria-label="รหัสผ่าน"
-          style={{ ...inputStyle, paddingRight: 64 }}
+          ariaLabel="รหัสผ่าน"
+          style={inputStyle}
         />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)" }}
-        >
-          {show ? "ซ่อน" : "แสดง"}
-        </button>
       </div>
 
       {state.error && (

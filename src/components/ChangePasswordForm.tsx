@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { changeOwnPassword } from "@/app/actions/users";
-import { fieldLabel, fieldInput, btnPrimary } from "./Modal";
+import { fieldLabel, btnPrimary } from "./Modal";
+import PasswordField from "./PasswordField";
 
 export default function ChangePasswordForm() {
   const [pending, start] = useTransition();
@@ -25,15 +26,15 @@ export default function ChangePasswordForm() {
     <form id="pw-form" action={submit} style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 420 }}>
       <label style={fieldLabel}>
         รหัสผ่านปัจจุบัน
-        <input name="current" type="password" autoComplete="current-password" style={fieldInput} />
+        <PasswordField name="current" autoComplete="current-password" />
       </label>
       <label style={fieldLabel}>
         รหัสผ่านใหม่
-        <input name="next" type="password" autoComplete="new-password" style={fieldInput} />
+        <PasswordField name="next" placeholder="อย่างน้อย 8 ตัวอักษร" />
       </label>
       <label style={fieldLabel}>
         ยืนยันรหัสผ่านใหม่
-        <input name="confirm" type="password" autoComplete="new-password" style={fieldInput} />
+        <PasswordField name="confirm" />
       </label>
       {msg && (
         <div role="alert" style={{ fontSize: 13.5, color: msg.ok ? "var(--accent)" : "var(--red)" }}>
