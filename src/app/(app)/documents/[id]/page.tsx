@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { getDocumentById } from "@/lib/documents";
-import { STATUS_META, WORKS, CATEGORIES, DOC_TYPES, ACK_TYPES, can, canUserEdit, beDate } from "@/lib/reference";
+import { STATUS_META, WORKS, CATEGORIES, DOC_TYPES, ACK_TYPES, CENTRAL_WORK_ID, can, canUserEdit, beDate } from "@/lib/reference";
 import DocumentActions from "@/components/DocumentActions";
 import AttachmentManager, { type AttView } from "@/components/AttachmentManager";
 
@@ -25,9 +25,11 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
   const isMedTech = doc.workId === "MEDTECH";
 
   // Ack scope = active users in the same work (fallback to all active users).
+  // เอกสารกลางระดับฝ่ายใช้ร่วมกันทุกงาน → ขอบเขตผู้ต้องรับทราบคือทุกคนในฝ่าย
   // ackByMe ถามตรงจาก DB — ไม่พึ่ง doc.acks ที่ถูกจำกัดจำนวน (take) เพื่อประสิทธิภาพ
+  const isCentralDoc = doc.workId === CENTRAL_WORK_ID;
   const [ackScope, ackDoneCount, myAck] = await Promise.all([
-    prisma.user.count({ where: { isActive: true, ...(doc.workId ? { workId: doc.workId } : {}) } }),
+    prisma.user.count({ where: { isActive: true, ...(doc.workId && !isCentralDoc ? { workId: doc.workId } : {}) } }),
     prisma.acknowledgement.count({ where: { documentId: doc.id } }),
     prisma.acknowledgement.findFirst({ where: { documentId: doc.id, userId: user.id }, select: { id: true } }),
   ]);
