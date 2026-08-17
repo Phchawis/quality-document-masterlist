@@ -3,17 +3,11 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { buildDocWhere, buildDocOrderBy } from "@/lib/documents";
 import { STATUS_META, WORKS, CATEGORIES, KIND_META, beDate } from "@/lib/reference";
+import { csvCell } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-function csvCell(v: string | number | null | undefined): string {
-  let s = String(v ?? "");
-  // กัน CSV formula injection: ถ้าเซลล์ขึ้นต้นด้วย = + - @ หรือ tab/CR ให้ใส่ ' นำหน้า
-  // (ชื่อเอกสารเช่น =HYPERLINK(...) จะไม่ทำงานเป็นสูตรตอนเปิดใน Excel)
-  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
-  // ใส่ quote ถ้ามี comma / quote / newline และ escape quote ด้วยการทำซ้ำ
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+// csvCell ย้ายไป @/lib/security เพื่อให้ทดสอบอัตโนมัติได้
 
 // Exports the current (filtered) masterlist as an Excel-openable CSV.
 export async function GET(req: NextRequest) {

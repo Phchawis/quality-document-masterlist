@@ -4,15 +4,12 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { createSessionCookie, destroySessionCookie, readSession } from "@/lib/session";
+import { safeNext } from "@/lib/security";
 
 export type LoginState = { error?: string };
 
-// ปลายทางหลัง login ต้องเป็น path ภายในเท่านั้น — กัน open redirect
-// "//evil.com" และ "/\evil.com" ถูกเบราว์เซอร์ตีความเป็นโดเมนนอก จึงต้องปฏิเสธ
-function safeNext(next: string): string {
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/";
-  return next;
-}
+// safeNext (กัน open redirect) ย้ายไป @/lib/security เพื่อให้ทดสอบอัตโนมัติได้
+// หมายเหตุ: ไฟล์ "use server" export ได้เฉพาะ async function จึงต้องแยกออกไปอยู่ดี
 
 // จำกัดจำนวนครั้งที่ล็อกอินผิด (in-memory ต่อ instance) — ชะลอ brute-force
 const MAX_ATTEMPTS = 8;
