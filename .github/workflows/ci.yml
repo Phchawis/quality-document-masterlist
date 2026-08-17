@@ -1,0 +1,66 @@
+name: CI
+
+# ตรวจคุณภาพโค้ดทุกครั้งที่ push หรือเปิด pull request
+# จับปัญหาให้ได้ "ก่อน" ขึ้นระบบจริง แทนที่จะไปเจอตอนผู้ใช้ใช้งาน
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ทดสอบ · ตรวจชนิดข้อมูล · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # ค่าปลอมสำหรับขั้นตอน build เท่านั้น — ไม่ได้เชื่อมฐานข้อมูลจริง
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      SESSION_SECRET: ci-only-secret-at-least-32-characters-long
+      SSO_SHARED_SECRET: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ติดตั้ง Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: ติดตั้ง dependencies
+        run: npm ci
+
+      - name: รันชุดทดสอบ (สิทธิ์ + ความปลอดภัย)
+        run: npm test
+
+      - name: ตรวจชนิดข้อมูล (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: ตรวจสไตล์โค้ด (ESLint)
+        run: npm run lint
+
+      - name: ตรวจ Prisma schema
+        run: npx prisma validate
+
+      - name: Build เว็บ
+        run: npm run build
+
+  docker:
+    name: ตรวจว่า Docker image build ได้
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # build image ที่นี่แทนบนเซิร์ฟเวอร์จริง — VPS มี RAM 2GB
+      # การ build บนเครื่องจริงเคยทำให้บริการอื่นบนเครื่องเดียวกันสะดุด (พบจริง 2 ครั้ง)
+      - name: Build Docker image
+        run: docker build -t masterlist:ci .
