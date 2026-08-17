@@ -3,6 +3,7 @@ import { ROLE_META, ROLE_ORDER } from "@/lib/reference";
 import type { Perm } from "@/lib/reference";
 import { RegisterTutorial, UploadTutorial, ArchitectureGuide } from "@/components/GuideTutorials";
 import PrintGuideButton from "@/components/PrintGuideButton";
+import DowntimePlan from "@/components/DowntimePlan";
 
 export const dynamic = "force-dynamic";
 
@@ -136,6 +137,8 @@ export default async function GuidePage() {
           ))}
         </div>
       </section>
+
+      <DowntimePlan />
 
       <ArchitectureGuide />
 
