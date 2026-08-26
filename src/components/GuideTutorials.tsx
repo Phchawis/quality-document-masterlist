@@ -139,6 +139,172 @@ function Cursor({ style }: { style?: React.CSSProperties }) {
   );
 }
 
+/* ---------- section: เข้าใช้งานครั้งแรก ----------
+   บัญชีส่วนใหญ่นำเข้าจากทะเบียนบุคลากรพร้อมกันทั้งชุด จึงเริ่มด้วยรหัสผ่านชั่วคราว
+   ชุดเดียวกันทุกคน — ส่วนนี้จึงมาก่อนบทเรียนอื่นทั้งหมด
+   หมายเหตุ: ไม่พิมพ์ตัวรหัสชั่วคราวลงคู่มือ เพราะคู่มือเปิดอ่านได้ทุกบทบาท */
+
+// ช่องรหัสผ่านจำลอง พร้อมปุ่มรูปตาแบบเดียวกับ PasswordField จริง
+function MockPasswordInput({ value, revealed = false }: { value: string; revealed?: boolean }) {
+  return (
+    <div style={{ ...mockInput, display: "flex", alignItems: "center", gap: 8 }}>
+      <span style={{ flex: 1, minWidth: 0, letterSpacing: revealed ? 0 : ".18em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {revealed ? value : "•".repeat(value.length)}
+      </span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={revealed ? "var(--accent)" : "var(--muted)"} strokeWidth="2" strokeLinecap="round" aria-hidden style={{ flex: "0 0 auto" }}>
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+        {!revealed && <line x1="3" y1="21" x2="21" y2="3" />}
+      </svg>
+    </div>
+  );
+}
+
+export function FirstLoginTutorial() {
+  return (
+    <section style={{ marginTop: 44 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 4 }}>
+        <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 19, margin: 0 }}>เข้าใช้งานครั้งแรก</h2>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)", letterSpacing: ".08em" }}>3 ขั้นตอน</span>
+      </div>
+      <p style={{ fontSize: 14, color: "var(--muted)", margin: "10px 0 0", maxWidth: "72ch" }}>
+        บัญชีของเจ้าหน้าที่สร้างจากทะเบียนบุคลากร — <b style={{ color: "var(--text)", fontWeight: 600 }}>ชื่อผู้ใช้คือรหัสเจ้าหน้าที่</b> และเริ่มต้นด้วยรหัสผ่านชั่วคราวที่ผู้ดูแลระบบแจ้งให้ทราบ
+      </p>
+
+      <div style={{ marginTop: 18 }}>
+        {/* ขั้นที่ 1 — ล็อกอินด้วยรหัสชั่วคราว */}
+        <div style={stepRow}>
+          <div style={stepText}>
+            <div style={stepNum}>ขั้นที่ 1</div>
+            <h3 style={stepTitle}>เข้าสู่ระบบด้วยรหัสเจ้าหน้าที่</h3>
+            <p style={stepDesc}>
+              กรอก <b style={{ color: "var(--text)", fontWeight: 600 }}>รหัสเจ้าหน้าที่</b> ของคุณในช่องชื่อผู้ใช้
+              และรหัสผ่านชั่วคราวที่ได้รับในช่องรหัสผ่าน แล้วกดเข้าสู่ระบบ
+            </p>
+            <ul style={tipList}>
+              <li style={tipItem}><span style={tipMark}>›</span><span>ถ้าเข้าไม่ได้ ให้ตรวจว่าพิมพ์รหัสเจ้าหน้าที่ครบทุกหลักและไม่มีเว้นวรรค</span></li>
+            </ul>
+          </div>
+          <div style={stepVisual}>
+            <div style={panel}>
+              <div style={panelCaption}>หน้าเข้าสู่ระบบ</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                <div>
+                  <span style={mockLabel}>ชื่อผู้ใช้</span>
+                  <div style={mockInput}>10212</div>
+                </div>
+                <div>
+                  <span style={mockLabel}>รหัสผ่าน</span>
+                  <MockPasswordInput value="temporary" />
+                </div>
+                <div style={{ position: "relative", alignSelf: "flex-start" }}>
+                  <span style={{ ...mockBtnPrimary, animation: "clickPulse 2.6s cubic-bezier(.2,.7,.3,1) infinite" }}>เข้าสู่ระบบ</span>
+                  <Cursor style={{ right: -6, bottom: -12 }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ขั้นที่ 2 — บังคับตั้งรหัสใหม่ */}
+        <div style={stepRow}>
+          <div style={stepText}>
+            <div style={stepNum}>ขั้นที่ 2</div>
+            <h3 style={stepTitle}>ตั้งรหัสผ่านของตัวเองทันที</h3>
+            <p style={stepDesc}>
+              ระบบจะพาไปหน้า <b style={{ color: "var(--text)", fontWeight: 600 }}>ตั้งรหัสผ่านของคุณ</b> โดยอัตโนมัติ —
+              กรอกรหัสชั่วคราวอีกครั้งเพื่อยืนยันตัวตน แล้วตั้งรหัสใหม่ <b style={{ color: "var(--text)", fontWeight: 600 }}>อย่างน้อย 8 ตัวอักษร</b> พร้อมยืนยันให้ตรงกัน
+            </p>
+            <ul style={tipList}>
+              <li style={tipItem}><span style={tipMark}>›</span><span>กดปุ่มรูปตาท้ายช่องเพื่อดูรหัสที่พิมพ์ ป้องกันการพิมพ์ผิดโดยไม่รู้ตัว</span></li>
+              <li style={tipItem}><span style={tipMark}>›</span><span>ตั้งรหัสที่คุณจำได้เอง ไม่ควรใช้รหัสเดียวกับระบบอื่นของโรงพยาบาล</span></li>
+            </ul>
+          </div>
+          <div style={stepVisual}>
+            <div style={panel}>
+              <div style={panelCaption}>หน้าตั้งรหัสผ่านของคุณ</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                <div>
+                  <span style={mockLabel}>รหัสผ่านชั่วคราว (ที่ได้รับ)</span>
+                  <MockPasswordInput value="temporary" />
+                </div>
+                <div>
+                  <span style={mockLabel}>รหัสผ่านใหม่</span>
+                  <MockPasswordInput value="my-own-pass" revealed />
+                </div>
+                <div>
+                  <span style={mockLabel}>ยืนยันรหัสผ่านใหม่</span>
+                  <MockPasswordInput value="my-own-pass" />
+                </div>
+                <div style={{ position: "relative", alignSelf: "flex-start" }}>
+                  <span style={{ ...mockBtnPrimary, animation: "clickPulse 2.6s cubic-bezier(.2,.7,.3,1) infinite" }}>บันทึกรหัสผ่านใหม่</span>
+                  <Cursor style={{ right: -6, bottom: -12 }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ขั้นที่ 3 — ใช้งานได้เต็มรูปแบบ */}
+        <div style={{ ...stepRow, borderBottom: "1px solid var(--line)" }}>
+          <div style={stepText}>
+            <div style={stepNum}>ขั้นที่ 3</div>
+            <h3 style={stepTitle}>เริ่มใช้งานได้เต็มรูปแบบ</h3>
+            <p style={stepDesc}>
+              เมื่อบันทึกสำเร็จ ระบบจะเปิดเมนูทั้งหมดตามสิทธิ์ของบทบาทคุณ และจะไม่ถามเรื่องรหัสผ่านอีก —
+              ครั้งต่อไปให้เข้าระบบด้วยรหัสที่คุณตั้งเอง
+            </p>
+            <ul style={tipList}>
+              <li style={tipItem}><span style={tipMark}>›</span><span>เปลี่ยนรหัสผ่านภายหลังได้ตลอดเวลาที่เมนูบัญชีของคุณ</span></li>
+              <li style={tipItem}><span style={tipMark}>›</span><span>ลืมรหัส — แจ้งผู้ดูแลระบบ ระบบจะรีเซ็ตเป็นรหัสชั่วคราวและบังคับตั้งใหม่อีกครั้ง</span></li>
+            </ul>
+          </div>
+          <div style={stepVisual}>
+            <div style={panel}>
+              <div style={panelCaption}>เมนูหลังเข้าสู่ระบบ</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {["แดชบอร์ด", "ทะเบียนเอกสาร", "คู่มือ", "บัญชีของฉัน"].map((m, i) => (
+                  <span
+                    key={m}
+                    style={{
+                      fontFamily: "var(--display)",
+                      fontWeight: 600,
+                      fontSize: 12.5,
+                      padding: "7px 11px",
+                      borderRadius: 2,
+                      border: `1px solid ${i === 0 ? "var(--accent2)" : "var(--line2)"}`,
+                      background: i === 0 ? "var(--accent-dim)" : "transparent",
+                      color: i === 0 ? "var(--accent)" : "var(--sub)",
+                    }}
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+              <div style={{ marginTop: 13, display: "flex", flexDirection: "column", gap: 7 }}>
+                <MockCheck on label="ค้นหาและเปิดดูเอกสารได้" />
+                <MockCheck on label="ลงนามรับทราบในชื่อของคุณเอง" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* เหตุผลของการบังคับเปลี่ยนรหัส — ผูกกับข้อกำหนดจริง ไม่ใช่กฎที่ตั้งขึ้นลอย ๆ */}
+      <div style={{ marginTop: 22, display: "flex", gap: 14, alignItems: "flex-start", background: "var(--surface)", border: "1px solid var(--amber)", borderRadius: 3, padding: "16px 18px" }}>
+        <span aria-hidden style={{ fontFamily: "var(--mono)", fontSize: 12, fontWeight: 600, letterSpacing: ".08em", color: "var(--amber)", border: "1px solid var(--amber)", borderRadius: 2, padding: "3px 8px", flex: "0 0 auto", textTransform: "uppercase" }}>สำคัญ</span>
+        <p style={{ fontSize: 14, color: "var(--sub)", margin: 0, lineHeight: 1.7 }}>
+          <b style={{ color: "var(--text)", fontWeight: 600 }}>ระบบจะปิดกั้นทุกเมนูจนกว่าจะตั้งรหัสผ่านของตัวเอง</b> —
+          รหัสชั่วคราวเป็นชุดเดียวกันทั้งหน่วยงาน หากไม่เปลี่ยน ผู้อื่นที่ทราบรหัสสามารถเข้าบัญชีของคุณและ
+          <b style={{ color: "var(--text)", fontWeight: 600 }}>ลงนามรับทราบเอกสารแทนคุณได้</b>{" "}
+          ทำให้หลักฐานการรับทราบใช้อ้างอิงในการตรวจประเมินไม่ได้ ตามข้อกำหนด ISO 15189:2022 ที่ต้องระบุตัวผู้ปฏิบัติได้ชัดเจน
+          ด้วยเหตุผลเดียวกัน <b style={{ color: "var(--text)", fontWeight: 600 }}>ห้ามใช้บัญชีร่วมกันหลายคน</b>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- section: ลงทะเบียนเอกสาร ---------- */
 
 export function RegisterTutorial() {

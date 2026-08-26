@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_META, ROLE_ORDER } from "@/lib/reference";
 import type { Perm } from "@/lib/reference";
-import { RegisterTutorial, UploadTutorial, ArchitectureGuide } from "@/components/GuideTutorials";
+import { FirstLoginTutorial, RegisterTutorial, UploadTutorial, ArchitectureGuide } from "@/components/GuideTutorials";
 import PrintGuideButton from "@/components/PrintGuideButton";
 import DowntimePlan from "@/components/DowntimePlan";
 
@@ -21,7 +21,7 @@ const PERM_COLS: [Perm | "view", string][] = [
 ];
 
 const STEPS = [
-  { n: "01", t: "เข้าสู่ระบบด้วยบัญชีของคุณ", d: "เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่ได้รับ ระบบจะแสดงเมนูและปุ่มดำเนินการตามสิทธิ์ของบทบาทโดยอัตโนมัติ" },
+  { n: "01", t: "เข้าสู่ระบบด้วยบัญชีของคุณ", d: "ชื่อผู้ใช้คือรหัสเจ้าหน้าที่ของคุณ — เข้าครั้งแรกระบบจะให้ตั้งรหัสผ่านของตัวเองก่อน จากนั้นจะแสดงเมนูตามสิทธิ์ของบทบาทโดยอัตโนมัติ" },
   { n: "02", t: "ค้นหาเอกสารจากทะเบียน", d: "ค้นหาด้วยรหัสหรือชื่อเอกสาร ร่วมกับตัวกรอง งาน · ประเภท · หมวดงาน · สถานะ และคลิกหัวตารางเพื่อเรียงลำดับ" },
   { n: "03", t: "เปิดดูรายละเอียดเอกสาร", d: "คลิกแถวเอกสารเพื่อดูข้อมูลควบคุม ไฟล์แนบ ประวัติการแก้ไข และความคืบหน้าการรับทราบของหมวดงาน" },
   { n: "04", t: "บันทึกการอ่าน / รับทราบ", d: "เอกสาร QM · SOP · WI ต้องลงนามรับทราบ — กดปุ่มรับทราบ ระบบจะบันทึกชื่อและวันที่ของคุณทันที" },
@@ -52,7 +52,7 @@ export default async function GuidePage() {
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: "var(--mono)", fontSize: 12, letterSpacing: ".24em", color: "var(--accent)", textTransform: "uppercase", marginBottom: 12 }}>User Guide</div>
             <h1 style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: "clamp(1.8rem,3.8vw,2.8rem)", letterSpacing: "-.02em", lineHeight: 1, margin: 0 }}>คู่มือการใช้งาน</h1>
-            <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
+            <p style={{ color: "var(--sub)", margin: "14px 0 0", fontSize: 16, maxWidth: "60ch" }}>การเข้าใช้งานครั้งแรก ภาพรวมการใช้งาน วิธีลงทะเบียนเอกสารใหม่ วิธีอัปโหลดไฟล์แนบ สิทธิ์ของแต่ละบทบาท และความหมายของรูปแบบไฟล์แนบ</p>
           </div>
           <PrintGuideButton />
         </div>
@@ -78,6 +78,7 @@ export default async function GuidePage() {
         </div>
       </section>
 
+      <FirstLoginTutorial />
       <RegisterTutorial />
       <UploadTutorial />
 
