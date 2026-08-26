@@ -28,6 +28,8 @@ model User {
   workId       String? // สังกัดงาน (ใช้กำหนดขอบเขตการรับทราบ)
   work         Work?    @relation(fields: [workId], references: [id])
   isActive     Boolean  @default(true)
+  // true = ยังใช้รหัสผ่านชั่วคราวที่ผู้ดูแลตั้งให้ ต้องตั้งรหัสของตัวเองก่อนใช้งานระบบ
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -82,7 +82,8 @@ export async function resetPassword(userId: string, password: string): Promise<U
   }
 
   if (password.length < 8) return { ok: false, error: "รหัสผ่านอย่างน้อย 8 ตัวอักษร" };
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(password, 10) } });
+  // ผู้ดูแลตั้งรหัสให้ = รหัสชั่วคราว เจ้าตัวต้องตั้งใหม่เองก่อนใช้งาน
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(password, 10), mustChangePassword: true } });
   await prisma.auditLog.create({ data: { userId: admin.id, userName: admin.fullName, action: "RESET_PASSWORD", detail: `รีเซ็ตรหัสผ่านผู้ใช้ ${userId}` } });
   revalidatePath("/admin/users");
   return { ok: true };
@@ -103,7 +104,12 @@ export async function changeOwnPassword(formData: FormData): Promise<UserActionR
   const ok = await bcrypt.compare(current, user.passwordHash);
   if (!ok) return { ok: false, error: "รหัสผ่านปัจจุบันไม่ถูกต้อง" };
 
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10) } });
+  if (await bcrypt.compare(next, user.passwordHash)) {
+    return { ok: false, error: "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสผ่านเดิม" };
+  }
+
+  // เปลี่ยนรหัสเอง = ล้างธงรหัสชั่วคราว ใช้งานระบบได้ตามปกติ
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), mustChangePassword: false } });
   await prisma.auditLog.create({ data: { userId: user.id, userName: user.fullName, action: "CHANGE_PASSWORD", detail: "เปลี่ยนรหัสผ่านตนเอง" } });
   return { ok: true };
 }
