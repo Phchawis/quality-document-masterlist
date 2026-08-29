@@ -72,6 +72,9 @@ export const KIND_META = {
   WORD: { tag: "DOC", label: "แก้ไข", color: "var(--blue)", ext: "docx" },
   EXCEL: { tag: "XLS", label: "แก้ไข", color: "var(--accent)", ext: "xlsx" },
   URL: { tag: "URL", label: "เปิดลิงก์", color: "var(--amber)", ext: "" },
+  IMAGE: { tag: "IMG", label: "เปิดดู", color: "var(--blue)", ext: "png" },
+  SLIDE: { tag: "PPT", label: "ดาวน์โหลด", color: "var(--amber)", ext: "pptx" },
+  OTHER: { tag: "FILE", label: "ดาวน์โหลด", color: "var(--muted)", ext: "" },
 } as const;
 
 // Role permission matrix — mirrors the prototype's role.p table.

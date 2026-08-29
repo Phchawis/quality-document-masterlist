@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { uploadAttachment, addUrlAttachment, removeAttachment } from "@/app/actions/documents";
 import { KIND_META } from "@/lib/reference";
+import { ACCEPT_ATTR } from "@/lib/file-types";
 import type { AttachmentKind } from "@/generated/prisma/enums";
 
 export type AttView = {
@@ -79,7 +80,8 @@ export default function AttachmentManager({ documentId, atts, canUpload, canView
               </span>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 11 }}>
-              {a.kind === "PDF" && fileHref && canView && (
+              {/* PDF และภาพเปิดอ่านในเบราว์เซอร์ได้เลย ชนิดอื่นให้ดาวน์โหลดไปเปิดด้วยโปรแกรมปลายทาง */}
+              {(a.kind === "PDF" || a.kind === "IMAGE") && fileHref && canView && (
                 <>
                   <a href={fileHref} target="_blank" rel="noreferrer" style={btnMini}>เปิดดูในเว็บ</a>
                   <a href={`${fileHref}?download=1`} style={btnMiniGhost}>ดาวน์โหลด</a>
@@ -87,6 +89,9 @@ export default function AttachmentManager({ documentId, atts, canUpload, canView
               )}
               {(a.kind === "WORD" || a.kind === "EXCEL") && fileHref && (
                 <a href={`${fileHref}?download=1`} style={btnMini}>ดาวน์โหลดไปแก้ไข</a>
+              )}
+              {(a.kind === "SLIDE" || a.kind === "OTHER") && fileHref && (
+                <a href={`${fileHref}?download=1`} style={btnMini}>ดาวน์โหลด</a>
               )}
               {a.kind === "URL" && a.url && (
                 <a href={a.url} target="_blank" rel="noreferrer" style={btnMini}>เปิดลิงก์ ↗</a>
@@ -125,7 +130,7 @@ export default function AttachmentManager({ documentId, atts, canUpload, canView
           </div>
           {msg && <p style={{ fontSize: 12.5, color: "var(--red)", margin: "11px 0 0" }}>{msg}</p>}
           {!msg && <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "11px 0 0" }}>ไฟล์และลิงก์ที่แนบใหม่จะแสดงในรายการด้านบนทันที</p>}
-          <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={onFile} aria-hidden tabIndex={-1} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept={ACCEPT_ATTR} onChange={onFile} aria-hidden tabIndex={-1} style={{ display: "none" }} />
         </div>
       )}
     </div>

@@ -155,6 +155,9 @@ enum AttachmentKind {
   WORD // แก้ไข
   EXCEL // แก้ไข
   URL // ลิงก์ระบบ / E-Doc
+  IMAGE // ภาพสแกน / ภาพถ่ายเอกสาร
+  SLIDE // สไลด์นำเสนอ (ppt/pptx)
+  OTHER // ไฟล์เอกสารอื่นที่อนุญาต (txt/rtf/odt/csv ฯลฯ)
 }
 
 model Attachment {

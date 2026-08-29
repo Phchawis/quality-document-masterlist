@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { STATUS_META, KIND_META, WORKS, ACK_TYPES, beDate } from "@/lib/reference";
 import { acknowledgeDocuments } from "@/app/actions/documents";
+import type { AttachmentKind } from "@/generated/prisma/enums";
 
 type DocType = {
   id: string;
@@ -21,7 +22,7 @@ type DocType = {
   };
   attachments: {
     id: string;
-    kind: "PDF" | "WORD" | "EXCEL" | "URL";
+    kind: AttachmentKind;
   }[];
   acks: {
     userId: string;

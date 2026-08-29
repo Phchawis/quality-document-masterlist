@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { can, canUserEdit, WORKS, KIND_META, ACK_TYPES } from "@/lib/reference";
 import { saveUpload, deleteStored } from "@/lib/storage";
+import { MAX_UPLOAD_BYTES } from "@/lib/file-types";
 import type { AttachmentKind } from "@/generated/prisma/enums";
 
 const RETENTION_YEARS = [2, 5, 10];
@@ -261,10 +262,14 @@ export async function uploadAttachment(documentId: string, formData: FormData): 
   if (!user || !canUserEdit(user, "upload")) return { ok: false, error: "ไม่มีสิทธิ์แนบไฟล์" };
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "ไม่พบไฟล์" };
-  if (file.size > 50 * 1024 * 1024) return { ok: false, error: "ไฟล์ใหญ่เกิน 50MB" };
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: "ไฟล์ใหญ่เกิน 50MB" };
 
   const saved = await saveUpload(file);
-  if (!saved) return { ok: false, error: "รองรับเฉพาะไฟล์ PDF, Word, Excel" };
+  // บอกนามสกุลที่ไม่รับกลับไปด้วย ผู้ใช้จะได้รู้ว่าต้องแปลงไฟล์เป็นอะไร
+  if (!saved) {
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    return { ok: false, error: `ไม่รองรับไฟล์นามสกุล .${ext} — รองรับ PDF, Word, Excel, PowerPoint, รูปภาพ และไฟล์ข้อความ` };
+  }
 
   try {
     await prisma.attachment.create({

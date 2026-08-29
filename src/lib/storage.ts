@@ -8,19 +8,11 @@ export function uploadRoot(): string {
   return path.isAbsolute(UPLOAD_DIR) ? UPLOAD_DIR : path.join(process.cwd(), UPLOAD_DIR);
 }
 
-const ALLOWED: Record<string, { kind: "PDF" | "WORD" | "EXCEL"; mime: string }> = {
-  pdf: { kind: "PDF", mime: "application/pdf" },
-  doc: { kind: "WORD", mime: "application/msword" },
-  docx: { kind: "WORD", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-  xls: { kind: "EXCEL", mime: "application/vnd.ms-excel" },
-  xlsx: { kind: "EXCEL", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-};
+import { kindForExt, type UploadKind } from "./file-types";
 
-export function kindForExt(ext: string) {
-  return ALLOWED[ext.toLowerCase().replace(/^\./, "")] ?? null;
-}
+export { kindForExt };
 
-export async function saveUpload(file: File): Promise<{ storedName: string; size: number; mime: string; kind: "PDF" | "WORD" | "EXCEL"; ext: string } | null> {
+export async function saveUpload(file: File): Promise<{ storedName: string; size: number; mime: string; kind: UploadKind; ext: string } | null> {
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   const meta = kindForExt(ext);
   if (!meta) return null;
