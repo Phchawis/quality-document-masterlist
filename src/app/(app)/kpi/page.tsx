@@ -15,6 +15,7 @@ export default async function KpiPage({
   const user = await requireUser();
   const sp = await searchParams;
   const canEnter = ["SYSADMIN", "HEAD_WORK", "HEAD_CAT"].includes(user.role);
+  const canStartYear = ["SYSADMIN", "HEAD_WORK"].includes(user.role);
 
   const years = (
     await prisma.kpiIndicator.findMany({
@@ -67,6 +68,7 @@ export default async function KpiPage({
       years={years}
       works={[...byWork.values()]}
       canEnter={canEnter}
+      canStartYear={canStartYear}
     />
   );
 }

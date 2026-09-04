@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+
+import { startFiscalYear } from "@/app/actions/kpi";
 
 import {
   FISCAL_MONTHS,
@@ -118,12 +120,31 @@ function Sparkline({ ind }: { ind: Indicator }) {
 }
 
 export default function KpiBoard({
-  year, years, works, canEnter,
-}: { year: number; years: number[]; works: WorkBlock[]; canEnter: boolean }) {
+  year, years, works, canEnter, canStartYear,
+}: { year: number; years: number[]; works: WorkBlock[]; canEnter: boolean; canStartYear: boolean }) {
   const router = useRouter();
   const [focus, setFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [onlyProblem, setOnlyProblem] = useState(false);
+  const [pending, start] = useTransition();
+  const [yearMsg, setYearMsg] = useState<string | null>(null);
+
+  const latest = years.length ? Math.max(...years) : year;
+  const nextYear = latest + 1;
+
+  const openNextYear = () => {
+    if (!confirm(`เปิดปีงบประมาณ ${nextYear} โดยคัดลอกรายการตัวชี้วัดจากปี ${latest} มาตั้งต้น (ไม่เอาตัวเลขมาด้วย) ?`)) return;
+    setYearMsg(null);
+    start(async () => {
+      const res = await startFiscalYear(latest);
+      if (res.ok) {
+        setYearMsg(`เปิดปีงบประมาณ ${res.year} แล้ว — คัดลอกตัวชี้วัด ${res.created} ตัว`);
+        router.push(`/kpi?year=${res.year}`);
+      } else {
+        setYearMsg(res.error);
+      }
+    });
+  };
 
   const shown = focus ? works.filter((w) => w.workId === focus) : works;
 
@@ -161,6 +182,13 @@ export default function KpiBoard({
               กรอกผลรายเดือน
             </a>
           )}
+          {/* ปีงบใหม่ต้องมีรายการตัวชี้วัดก่อนถึงจะกรอกได้ — ปุ่มนี้คัดลอกจากปีล่าสุดมาตั้งต้น */}
+          {canStartYear && !years.includes(nextYear) && (
+            <button type="button" onClick={openNextYear} disabled={pending}
+              style={{ fontFamily: "var(--sans)", fontSize: 13.5, padding: "9px 14px", borderRadius: 2, border: "1px solid var(--line2)", background: "transparent", color: "var(--sub)", cursor: pending ? "wait" : "pointer", whiteSpace: "nowrap" }}>
+              {pending ? "กำลังเปิด…" : `เปิดปีงบ ${nextYear}`}
+            </button>
+          )}
           {years.length > 1 && (
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "var(--muted)" }}>
               ปีงบประมาณ
@@ -175,6 +203,9 @@ export default function KpiBoard({
           )}
           </div>
         </div>
+        {yearMsg && (
+          <p role="status" style={{ margin: "10px 0 0", fontSize: 13.5, color: "var(--sub)" }}>{yearMsg}</p>
+        )}
 
         {/* ตัวเลขสรุประดับฝ่าย — วางเป็นแถวเดียว ไม่ทำเป็นการ์ดใหญ่ เพราะเป็นบริบท ไม่ใช่พระเอกของหน้า */}
         <div style={{ display: "flex", gap: "10px 26px", flexWrap: "wrap", marginTop: 18, alignItems: "center" }}>

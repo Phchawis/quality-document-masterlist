@@ -8,6 +8,73 @@ import { FISCAL_MONTHS, canEditWork } from "@/lib/kpi";
 
 type Result = { ok: true; saved: number } | { ok: false; error: string };
 
+/* เริ่มปีงบประมาณใหม่ — คัดลอกรายการตัวชี้วัดจากปีก่อนมาตั้งต้น โดยไม่เอาค่ารายเดือนมา
+   รายการตัวชี้วัดเปลี่ยนไม่มากในแต่ละปี การพิมพ์ใหม่ 105 ตัวทุกปีไม่สมเหตุสมผล
+   คัดลอกมาแล้วค่อยแก้เฉพาะตัวที่เปลี่ยนจะเร็วกว่ามาก
+
+   รันซ้ำได้ — ตัวชี้วัดที่มีอยู่แล้วในปีปลายทางจะถูกข้าม ไม่เขียนทับของที่แก้ไปแล้ว */
+export async function startFiscalYear(fromYear: number): Promise<
+  { ok: true; year: number; created: number; skipped: number } | { ok: false; error: string }
+> {
+  const user = await getCurrentUser();
+  if (!user || !["SYSADMIN", "HEAD_WORK"].includes(user.role)) {
+    return { ok: false, error: "เฉพาะหัวหน้างานและผู้ดูแลระบบเท่านั้นที่เปิดปีงบประมาณใหม่ได้" };
+  }
+  const toYear = fromYear + 1;
+
+  const source = await prisma.kpiIndicator.findMany({
+    where: { fiscalYear: fromYear },
+    orderBy: { order: "asc" },
+  });
+  if (!source.length) return { ok: false, error: `ไม่พบตัวชี้วัดของปีงบประมาณ ${fromYear}` };
+
+  const existing = new Set(
+    (
+      await prisma.kpiIndicator.findMany({
+        where: { fiscalYear: toYear },
+        select: { workId: true, code: true },
+      })
+    ).map((r) => `${r.workId}|${r.code}`),
+  );
+
+  let created = 0;
+  let skipped = 0;
+  for (const s of source) {
+    if (existing.has(`${s.workId}|${s.code}`)) { skipped += 1; continue; }
+    await prisma.kpiIndicator.create({
+      data: {
+        workId: s.workId,
+        fiscalYear: toYear,
+        code: s.code,
+        name: s.name,
+        kind: s.kind,
+        targetOp: s.targetOp,
+        targetValue: s.targetValue,
+        targetRaw: s.targetRaw,
+        groupCode: s.groupCode,
+        groupName: s.groupName,
+        order: s.order,
+        owner: s.owner,
+        // สรุปผลเป็นของปีเก่า ไม่คัดลอกมา
+        summary: null,
+      },
+    });
+    created += 1;
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      userName: user.fullName,
+      action: "KPI_NEW_YEAR",
+      detail: `เปิดปีงบประมาณ ${toYear} · คัดลอกตัวชี้วัด ${created} ตัวจากปี ${fromYear}${skipped ? ` (ข้ามที่มีอยู่แล้ว ${skipped})` : ""}`,
+    },
+  });
+
+  revalidatePath("/kpi");
+  return { ok: true, year: toYear, created, skipped };
+}
+
 export async function saveKpiValues(
   workId: string,
   fiscalYear: number,
