@@ -102,6 +102,8 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         <div style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--muted)", marginTop: 14, letterSpacing: ".03em" }}>{doc.typeCode} · {type?.nameTh}</div>
       </div>
 
+      {/* ผู้ดูแลระบบลบได้ทุกสถานะ — ไว้เคลียร์เอกสารตัวอย่างที่ระบบสร้างไว้ตอนติดตั้ง
+          ซึ่งถูกตั้งเป็นสถานะประกาศใช้ จึงลบไม่ได้ด้วยกติกาปกติ */}
       <DocumentActions
         documentId={doc.id}
         code={doc.code}
@@ -114,7 +116,9 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
         showPublish={(doc.status === "DRAFT" || doc.status === "REVIEW") && canUserEdit(user, "publish")}
         showRevise={canUserEdit(user, "revise") && doc.status !== "OBSOLETE"}
         showCancel={canUserEdit(user, "register") && doc.status !== "OBSOLETE"}
-        showDelete={canUserEdit(user, "register") && doc.status === "DRAFT" && ackDoneCount === 0}
+        showDelete={canUserEdit(user, "register") && (user.role === "SYSADMIN" || (doc.status === "DRAFT" && ackDoneCount === 0))}
+        adminDelete={user.role === "SYSADMIN" && (doc.status !== "DRAFT" || ackDoneCount > 0)}
+        ackCount={ackDoneCount}
       />
 
       {/* timeline */}

@@ -169,21 +169,33 @@ export async function publishDocument(documentId: string): Promise<ActionResult>
   return { ok: true, documentId };
 }
 
-// ---------- Delete (draft only, never acknowledged — fixes registration mistakes) ----------
+/* ---------- Delete ----------
+   ผู้มีสิทธิ์ลงทะเบียนทั่วไป: ลบได้เฉพาะฉบับร่างที่ยังไม่มีผู้รับทราบ (ไว้แก้ตอนลงทะเบียนผิด)
+   ผู้ดูแลระบบ: ลบได้ทุกสถานะ — จำเป็นเพราะเอกสารตัวอย่างที่ระบบสร้างตอนติดตั้ง
+   ถูกตั้งเป็นสถานะประกาศใช้ไว้ ทำให้เคลียร์ออกไม่ได้เลยด้วยกติกาเดิม
+   ทุกครั้งที่ลบข้ามกติกา จะบันทึก audit log แยกให้เห็นชัดว่าเป็นการใช้สิทธิ์ผู้ดูแล */
 export async function deleteDocument(documentId: string): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user || !canUserEdit(user, "register")) return { ok: false, error: "ไม่มีสิทธิ์ลบเอกสาร" };
   const doc = await prisma.document.findUnique({ where: { id: documentId }, include: { attachments: true, acks: true } });
   if (!doc) return { ok: false, error: "ไม่พบเอกสาร" };
-  if (doc.status !== "DRAFT") return { ok: false, error: "ลบได้เฉพาะเอกสารสถานะฉบับร่างเท่านั้น (เอกสารที่เคยประกาศใช้ให้ใช้ปุ่มยกเลิกการใช้งานแทน)" };
-  if (doc.acks.length > 0) return { ok: false, error: "มีผู้รับทราบเอกสารนี้แล้ว ไม่สามารถลบได้" };
+
+  const isAdmin = user.role === "SYSADMIN";
+  const restricted = doc.status !== "DRAFT" || doc.acks.length > 0;
+  if (restricted && !isAdmin) {
+    if (doc.status !== "DRAFT") return { ok: false, error: "ลบได้เฉพาะเอกสารสถานะฉบับร่างเท่านั้น (เอกสารที่เคยประกาศใช้ให้ใช้ปุ่มยกเลิกการใช้งานแทน)" };
+    return { ok: false, error: "มีผู้รับทราบเอกสารนี้แล้ว ไม่สามารถลบได้" };
+  }
 
   // ลบ record ก่อน (attachments ลบตามด้วย cascade) แล้วค่อยลบไฟล์จริง — กันไฟล์หายแต่ record ค้าง
   await prisma.document.delete({ where: { id: documentId } });
   for (const att of doc.attachments) {
     if (att.storedName) await deleteStored(att.storedName);
   }
-  await log(user.id, user.fullName, "DELETE_DOC", null, `ลบเอกสาร ${doc.code} · ${doc.title}`);
+  const note = restricted
+    ? `ลบเอกสาร ${doc.code} · ${doc.title} (สิทธิ์ผู้ดูแลระบบ · สถานะ ${doc.status} · ผู้รับทราบ ${doc.acks.length} คน)`
+    : `ลบเอกสาร ${doc.code} · ${doc.title}`;
+  await log(user.id, user.fullName, "DELETE_DOC", null, note);
   revalidatePath("/masterlist");
   revalidatePath("/");
   redirect("/masterlist");

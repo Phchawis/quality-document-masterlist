@@ -18,6 +18,9 @@ type Props = {
   showRevise: boolean;
   showCancel: boolean;
   showDelete: boolean;
+  // true = กำลังลบด้วยสิทธิ์ผู้ดูแลระบบ ข้ามกติกา "เฉพาะฉบับร่าง" — ต้องเตือนให้หนักกว่าปกติ
+  adminDelete?: boolean;
+  ackCount?: number;
 };
 
 const btnGhost: React.CSSProperties = {
@@ -145,7 +148,18 @@ export default function DocumentActions(p: Props) {
               ยืนยันการลบเอกสาร <span style={{ fontFamily: "var(--mono)", color: "var(--text)" }}>{p.code}</span> ออกจากระบบ<b style={{ color: "var(--red)" }}>ถาวร</b> — รวมไฟล์แนบและประวัติทั้งหมดของเอกสารนี้ กู้คืนไม่ได้
             </p>
             <div style={{ fontSize: 14, color: "var(--muted)" }}>{p.title}</div>
-            <p style={{ fontSize: 12.5, color: "var(--faint)", margin: 0 }}>ใช้ได้เฉพาะเอกสารสถานะฉบับร่างที่ยังไม่มีผู้รับทราบเท่านั้น</p>
+            {p.adminDelete ? (
+              <div style={{ border: "1px solid var(--red)", borderRadius: 3, padding: "12px 14px", fontSize: 13.5, color: "var(--sub)", lineHeight: 1.7 }}>
+                <b style={{ color: "var(--red)" }}>กำลังลบด้วยสิทธิ์ผู้ดูแลระบบ</b> — เอกสารนี้ไม่ใช่ฉบับร่าง
+                {p.ackCount ? <> และมีผู้ลงนามรับทราบแล้ว <b style={{ color: "var(--text)" }}>{p.ackCount} คน</b> (บันทึกการรับทราบจะหายไปด้วย)</> : null}
+                <br />
+                ถ้าเป็นเอกสารที่ใช้งานจริง ควรใช้ <b style={{ color: "var(--text)" }}>ยกเลิกการใช้งาน</b> แทน เพื่อเก็บประวัติไว้ตามข้อกำหนด ISO 15189
+                <br />
+                การลบครั้งนี้จะถูกบันทึกในบันทึกตรวจสอบพร้อมชื่อของคุณ
+              </div>
+            ) : (
+              <p style={{ fontSize: 12.5, color: "var(--faint)", margin: 0 }}>ใช้ได้เฉพาะเอกสารสถานะฉบับร่างที่ยังไม่มีผู้รับทราบเท่านั้น</p>
+            )}
           </div>
         </Modal>
       )}
