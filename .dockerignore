@@ -7,3 +7,9 @@ uploads
 npm-debug.log
 README.md
 .claude
+
+# ไฟล์ทดสอบไม่ต้องเข้า image production — และ vitest.config.ts ทำให้ build ล้ม
+# เพราะ image ติดตั้งเฉพาะ dependency ที่ใช้ตอนรัน จึงหา 'vitest/config' ไม่เจอ
+vitest.config.ts
+**/*.test.ts
+**/*.test.tsx
