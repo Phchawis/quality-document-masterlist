@@ -177,6 +177,7 @@ export default function KpiBoard({
         .kpi-cell { transition: transform .12s ease, outline-color .12s ease; outline: 2px solid transparent; outline-offset: 1px; }
         .kpi-cell:hover { transform: scaleY(1.55); outline-color: var(--text); z-index: 1; }
         .kpi-row:hover { background: var(--surface2); }
+        .kpi-row:hover .kpi-row-name { text-decoration: underline; text-underline-offset: 3px; }
         @media (prefers-reduced-motion: reduce) {
           .kpi-spark { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
           .kpi-cell:hover { transform: none; }
@@ -307,6 +308,12 @@ export default function KpiBoard({
         </label>
       </div>
 
+      {/* บอกวิธีใช้ตรง ๆ — ตารางความร้อนกดได้/ชี้ได้ แต่ไม่มีอะไรบอก
+          ผู้ใช้จริงหากราฟไม่เจอมาแล้ว จึงเขียนไว้ให้เห็นก่อนถึงตาราง */}
+      <p style={{ margin: "14px 0 0", fontSize: 12.5, color: "var(--muted)", lineHeight: 1.7 }}>
+        กดที่แถวตัวชี้วัดเพื่อกางกราฟแนวโน้มทั้งปี · เอาเมาส์ชี้ที่ช่องสีเพื่อดูค่าของเดือนนั้น
+      </p>
+
       {shown.map((w) => {
         const s = summarise(w.indicators);
         const groups = new Map<string, Indicator[]>();
@@ -370,8 +377,14 @@ export default function KpiBoard({
                           style={{ ...gridRow, width: "100%", textAlign: "left", padding: "7px 0", border: "none", borderBottom: "1px solid var(--line)", background: isOpen ? "var(--surface2)" : "transparent", cursor: "pointer", alignItems: "center" }}
                         >
                           <span style={{ display: "flex", gap: 8, minWidth: 0, alignItems: "baseline" }}>
+                            {/* ลูกศรบอกว่าแถวนี้กางได้ — ผู้ใช้ไม่รู้มาก่อนว่าคลิกดูกราฟได้ */}
+                            <span aria-hidden style={{
+                              flex: "0 0 auto", alignSelf: "center", fontFamily: "var(--mono)", fontSize: 9,
+                              color: isOpen ? "var(--accent)" : "var(--faint)",
+                              transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .15s ease",
+                            }}>▶</span>
                             <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)", flex: "0 0 auto" }}>{ind.code}</span>
-                            <span style={{ fontSize: 13.5, color: "var(--sub)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.name}</span>
+                            <span className="kpi-row-name" style={{ fontSize: 13.5, color: isOpen ? "var(--accent)" : "var(--sub)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.name}</span>
                           </span>
 
                           <span style={monthsRow}>
