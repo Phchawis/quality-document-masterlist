@@ -35,6 +35,7 @@ export default function Header({ userName, roleTh, showUsers, showAudit, ackPend
   const nav = [
     { href: "/", label: "ภาพรวม", active: pathname === "/" },
     { href: "/masterlist", label: "ทะเบียนเอกสาร", active: pathname.startsWith("/masterlist") || pathname.startsWith("/documents") },
+    { href: "/kpi", label: "ตัวชี้วัด", active: pathname.startsWith("/kpi") },
     { href: "/guide", label: "คู่มือ", active: pathname === "/guide" },
     ...(showUsers ? [{ href: "/admin/users", label: "ผู้ใช้งาน", active: pathname.startsWith("/admin/users") }] : []),
     ...(showAudit ? [{ href: "/admin/audit", label: "ตรวจสอบ", active: pathname.startsWith("/admin/audit") }] : []),
