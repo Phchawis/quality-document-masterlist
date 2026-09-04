@@ -33,6 +33,21 @@ type Item = {
 type Group = { code: string; name: string; items: Item[] };
 type Work = { workId: string; name: string; kpis: Group[] };
 
+/* เป้าหมายในไฟล์ต้นทางมักเขียนเป็นตัวเลขเปล่า ๆ ("1", "0.99", "0.8") โดยไม่มี
+   เครื่องหมาย ซึ่งในทางปฏิบัติหมายถึง "ไม่ต่ำกว่า" ไม่ใช่ "เท่ากับเป๊ะ"
+   ถ้าตีเป็นเท่ากับ ตัวที่ทำได้ 99.38 จากเป้า 99 จะถูกนับว่าไม่ผ่าน ซึ่งผิด */
+function refineOp(kind: Kind, op: string | null, value: number | null): string | null {
+  if (op !== "=" || value === null) return op;
+  if (kind === "PERCENT" && value >= 50) return ">=";
+  return op;
+}
+
+/* ตัวชี้วัดที่ "ยิ่งน้อยยิ่งดี" แต่เขียนเป้าเป็นตัวเลขเปล่า จึงเดาทิศทางจากชื่อไม่ได้
+   ต้องระบุเป็นรายตัว — อัตราการจองเลือดต่อการใช้เลือด (C:T ratio) ยิ่งใกล้ 1 ยิ่งดี */
+const LOWER_IS_BETTER: Record<string, string[]> = {
+  TRANSFUSION: ["1.2.1"],
+};
+
 async function main() {
   const src = process.argv[2];
   if (!src) throw new Error("ต้องระบุไฟล์ JSON ที่จะนำเข้า");
@@ -55,14 +70,19 @@ async function main() {
       for (const it of g.items) {
         if (!it.code) continue;
         order += 1;
+        const kind = (it.kind ?? "OTHER") as Kind;
+        const tValue = it.target?.value ?? null;
+        const tOp = (LOWER_IS_BETTER[w.workId] ?? []).includes(it.code)
+          ? "<="
+          : refineOp(kind, it.target?.op ?? null, tValue);
         const rec = {
           workId: w.workId,
           fiscalYear: data.fiscalYear,
           code: it.code,
           name: it.name,
-          kind: (it.kind ?? "OTHER") as Kind,
-          targetOp: it.target?.op ?? null,
-          targetValue: it.target?.value ?? null,
+          kind,
+          targetOp: tOp,
+          targetValue: tValue,
           targetRaw: it.target?.raw ?? "",
           groupCode: g.code,
           groupName: g.name,
