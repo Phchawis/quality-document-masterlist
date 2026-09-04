@@ -145,6 +145,48 @@ export function isBlockingWarning(w: string | null): boolean {
   return w === "ไม่ใช่ตัวเลข" || w === "ค่าติดลบไม่ได้" || w === "ร้อยละเกิน 100 ไม่ได้";
 }
 
+/* ระยะห่างจากเป้าของค่าล่าสุด — บวก = ยังไม่ถึงเป้า (คิดทิศทางของตัวชี้วัดแล้ว)
+   ใช้จัดลำดับว่าตัวไหนควรแก้ก่อน */
+export function gapFromTarget(ind: Indicator): number | null {
+  const s = statsFor(ind);
+  if (!s.latest || ind.targetValue === null) return null;
+  const raw = higherIsBetter(ind.targetOp)
+    ? ind.targetValue - s.latest.value
+    : s.latest.value - ind.targetValue;
+  return raw;
+}
+
+export type Attention = {
+  ind: Indicator;
+  workName: string;
+  stats: IndicatorStats;
+  gap: number | null;
+  /** ความรุนแรงเทียบสัดส่วนกับเป้า — ใช้เรียงลำดับข้ามหน่วยที่ต่างกันได้ */
+  severity: number;
+};
+
+/* รายการที่ควรดูแลก่อน — เอาเฉพาะตัวที่ยังไม่ผ่านครบทุกเดือน
+   เรียงจากห่างเป้ามากที่สุด เพราะจากตัวชี้วัด 105 ตัว มีไม่ถึง 10% ที่ต้องลงมือทำ
+   ถ้าไม่ดึงขึ้นมาไว้บนสุด ผู้ใช้ต้องเลื่อนผ่านแถวที่ผ่านเป้าเป็นร้อยแถวเพื่อหามัน */
+export function attentionList(
+  works: { name: string; indicators: Indicator[] }[],
+): Attention[] {
+  const out: Attention[] = [];
+  for (const w of works) {
+    for (const ind of w.indicators) {
+      const stats = statsFor(ind);
+      if (stats.rate === null || stats.rate === 1) continue;
+      const gap = gapFromTarget(ind);
+      const denom = Math.max(Math.abs(ind.targetValue ?? 0), 1);
+      // ตัวที่ยังไม่ถึงเป้าเรียงตามสัดส่วนที่ขาด · ตัวที่ค่าล่าสุดผ่านแล้วแต่เคยตก
+      // ให้ความสำคัญน้อยกว่า แต่ยังต้องอยู่ในรายการ
+      const severity = gap !== null && gap > 0 ? gap / denom : (1 - stats.rate) * 0.5;
+      out.push({ ind, workName: w.name, stats, gap, severity });
+    }
+  }
+  return out.sort((a, b) => b.severity - a.severity);
+}
+
 /** สรุประดับงาน: ตัวชี้วัดกี่ตัวที่ "ผ่านทุกเดือนที่มีข้อมูล" */
 export function summarise(indicators: Indicator[]) {
   let pass = 0;

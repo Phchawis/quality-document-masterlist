@@ -7,6 +7,7 @@ import { startFiscalYear } from "@/app/actions/kpi";
 
 import {
   FISCAL_MONTHS,
+  attentionList,
   formatValue,
   higherIsBetter,
   meetsTarget,
@@ -29,6 +30,23 @@ const NODATA = "var(--line3)";
 function cellColor(ok: boolean | null) {
   if (ok === null) return NODATA;
   return ok ? PASS : FAIL;
+}
+
+/* ช่องที่ไม่ผ่านมีลายทแยงทับสีแดงด้วย ไม่พึ่งสีอย่างเดียว
+   คนตาบอดสีแดง-เขียวราว 8% ของผู้ชาย แยกเขียว/แดงไม่ออก ถ้าใช้สีล้วน
+   จะต้องเอาเมาส์ชี้ทีละช่องเพื่ออ่านค่า ซึ่งใช้ไม่ได้จริงกับ 1,260 ช่อง */
+function cellStyle(ok: boolean | null): React.CSSProperties {
+  const base: React.CSSProperties = {
+    height: 15,
+    borderRadius: 2,
+    background: cellColor(ok),
+    opacity: ok === null ? 0.45 : 1,
+  };
+  if (ok === false) {
+    base.backgroundImage =
+      "repeating-linear-gradient(45deg, rgba(0,0,0,.42) 0 2px, transparent 2px 4px)";
+  }
+  return base;
 }
 
 /* แถบสัดส่วนผ่าน/ไม่ผ่านของแต่ละงาน — อ่านสัดส่วนได้ทันทีโดยไม่ต้องอ่านตัวเลข */
@@ -128,6 +146,7 @@ export default function KpiBoard({
   const [onlyProblem, setOnlyProblem] = useState(false);
   const [pending, start] = useTransition();
   const [yearMsg, setYearMsg] = useState<string | null>(null);
+  const [showAllAttention, setShowAllAttention] = useState(false);
 
   const latest = years.length ? Math.max(...years) : year;
   const nextYear = latest + 1;
@@ -149,6 +168,7 @@ export default function KpiBoard({
   const shown = focus ? works.filter((w) => w.workId === focus) : works;
 
   const overall = useMemo(() => summarise(works.flatMap((w) => w.indicators)), [works]);
+  const attention = useMemo(() => attentionList(works), [works]);
 
   return (
     <div style={{ animation: "fadeUp .4s ease both" }}>
@@ -223,6 +243,80 @@ export default function KpiBoard({
           ))}
         </div>
       </div>
+
+      {/* ---- ต้องดูแลก่อน ----
+           จาก 105 ตัวชี้วัด มีไม่ถึง 10% ที่ยังไม่ผ่านเป้า ถ้าไม่ดึงขึ้นมาไว้บนสุด
+           ผู้ใช้ต้องเลื่อนผ่านแถวที่ผ่านแล้วเป็นร้อยแถวเพื่อหาสิ่งที่ต้องลงมือทำ
+           ส่วนตารางด้านล่างยังเรียงตามเลขข้อเดิม เพื่อให้เทียบกับแบบฟอร์มจริงได้ */}
+      {attention.length > 0 ? (
+        <section style={{ marginTop: 26 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 12 }}>
+            <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 18, margin: 0 }}>
+              ต้องดูแลก่อน
+            </h2>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--muted)" }}>
+              {attention.length} จาก {overall.total} ตัวชี้วัด · เรียงจากห่างเป้ามากที่สุด
+            </span>
+          </div>
+
+          <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>
+            {(showAllAttention ? attention : attention.slice(0, 8)).map((a, i) => {
+              const behind = a.gap !== null && a.gap > 0;
+              return (
+                <button
+                  key={a.ind.id}
+                  type="button"
+                  className="kpi-row"
+                  onClick={() => { setFocus(null); setOpen(a.ind.id); }}
+                  style={{
+                    display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "4px 18px",
+                    width: "100%", textAlign: "left", alignItems: "center",
+                    padding: "11px 14px", border: "none",
+                    borderTop: i === 0 ? "none" : "1px solid var(--line)",
+                    background: "transparent", cursor: "pointer",
+                  }}
+                >
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--accent)" }}>{a.ind.code}</span>
+                      <span style={{ fontSize: 14, color: "var(--text)", lineHeight: 1.5 }}>{a.ind.name}</span>
+                    </span>
+                    <span style={{ display: "block", fontSize: 12.5, color: "var(--muted)", marginTop: 3 }}>
+                      {a.workName} · ผ่าน {a.stats.passed}/{a.stats.passed + a.stats.failed} เดือน
+                    </span>
+                  </span>
+
+                  <span style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <span style={{ fontFamily: "var(--mono)", fontSize: 15, color: behind ? "var(--red)" : "var(--amber)" }}>
+                      {a.stats.latest ? formatValue(a.stats.latest.value, a.ind.kind) : "—"}
+                    </span>
+                    <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>
+                      เป้า {a.ind.targetRaw || "—"}
+                      {behind && <> · ห่าง {formatValue(a.gap!, a.ind.kind)}</>}
+                      {a.stats.trend !== null && (
+                        <span style={{ color: a.stats.trend > 0 ? "var(--accent)" : a.stats.trend < 0 ? "var(--red)" : "var(--muted)" }}>
+                          {" "}· {a.stats.trend > 0 ? "ดีขึ้น ↑" : a.stats.trend < 0 ? "แย่ลง ↓" : "คงที่"}
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {attention.length > 8 && (
+            <button type="button" onClick={() => setShowAllAttention((v) => !v)}
+              style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--accent)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
+              {showAllAttention ? "ย่อกลับ" : `ดูอีก ${attention.length - 8} ตัว`}
+            </button>
+          )}
+        </section>
+      ) : (
+        <p style={{ marginTop: 26, fontSize: 14.5, color: "var(--sub)" }}>
+          ตัวชี้วัดที่มีข้อมูลผ่านเป้าครบทุกตัว
+        </p>
+      )}
 
       {/* ---- เลือกงาน ---- */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "22px 0 6px" }}>
@@ -315,7 +409,7 @@ export default function KpiBoard({
                                   key={i}
                                   className="kpi-cell"
                                   title={`${FISCAL_MONTHS[i]} · ${formatValue(v, ind.kind)}${ok === null ? "" : ok ? " · ผ่าน" : " · ไม่ผ่าน"}`}
-                                  style={{ height: 15, borderRadius: 2, background: cellColor(ok), opacity: ok === null ? 0.45 : 1 }}
+                                  style={cellStyle(ok)}
                                 />
                               );
                             })}
