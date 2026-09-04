@@ -146,7 +146,6 @@ export default function KpiBoard({
   const [onlyProblem, setOnlyProblem] = useState(false);
   const [pending, start] = useTransition();
   const [yearMsg, setYearMsg] = useState<string | null>(null);
-  const [showAllAttention, setShowAllAttention] = useState(false);
 
   const latest = years.length ? Math.max(...years) : year;
   const nextYear = latest + 1;
@@ -249,72 +248,46 @@ export default function KpiBoard({
            ผู้ใช้ต้องเลื่อนผ่านแถวที่ผ่านแล้วเป็นร้อยแถวเพื่อหาสิ่งที่ต้องลงมือทำ
            ส่วนตารางด้านล่างยังเรียงตามเลขข้อเดิม เพื่อให้เทียบกับแบบฟอร์มจริงได้ */}
       {attention.length > 0 ? (
-        <section style={{ marginTop: 26 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginBottom: 12 }}>
-            <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 18, margin: 0 }}>
-              ต้องดูแลก่อน
-            </h2>
-            <span style={{ fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--muted)" }}>
-              {attention.length} จาก {overall.total} ตัวชี้วัด · เรียงจากห่างเป้ามากที่สุด
-            </span>
+        <section style={{ marginTop: 22 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+            <h2 style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 16, margin: 0 }}>ยังไม่ถึงเป้าในเดือนล่าสุด</h2>
+            <span style={{ fontFamily: "var(--mono)", fontSize: 12, color: "var(--muted)" }}>{attention.length} ตัวชี้วัด</span>
           </div>
 
+          {/* บรรทัดเดียวต่อรายการ — ชื่อ · ค่าล่าสุด · เป้า · ห่างเท่าไหร่
+              ตั้งใจให้อ่านจบในบรรทัดเดียว รายละเอียดที่เหลือกดเข้าไปดูในตารางด้านล่าง */}
           <div style={{ border: "1px solid var(--line2)", borderRadius: 3, overflow: "hidden" }}>
-            {(showAllAttention ? attention : attention.slice(0, 8)).map((a, i) => {
-              const behind = a.gap !== null && a.gap > 0;
-              return (
-                <button
-                  key={a.ind.id}
-                  type="button"
-                  className="kpi-row"
-                  onClick={() => { setFocus(null); setOpen(a.ind.id); }}
-                  style={{
-                    display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "4px 18px",
-                    width: "100%", textAlign: "left", alignItems: "center",
-                    padding: "11px 14px", border: "none",
-                    borderTop: i === 0 ? "none" : "1px solid var(--line)",
-                    background: "transparent", cursor: "pointer",
-                  }}
-                >
-                  <span style={{ minWidth: 0 }}>
-                    <span style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--accent)" }}>{a.ind.code}</span>
-                      <span style={{ fontSize: 14, color: "var(--text)", lineHeight: 1.5 }}>{a.ind.name}</span>
-                    </span>
-                    <span style={{ display: "block", fontSize: 12.5, color: "var(--muted)", marginTop: 3 }}>
-                      {a.workName} · ผ่าน {a.stats.passed}/{a.stats.passed + a.stats.failed} เดือน
-                    </span>
-                  </span>
-
-                  <span style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <span style={{ fontFamily: "var(--mono)", fontSize: 15, color: behind ? "var(--red)" : "var(--amber)" }}>
-                      {a.stats.latest ? formatValue(a.stats.latest.value, a.ind.kind) : "—"}
-                    </span>
-                    <span style={{ display: "block", fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)", marginTop: 3 }}>
-                      เป้า {a.ind.targetRaw || "—"}
-                      {behind && <> · ห่าง {formatValue(a.gap!, a.ind.kind)}</>}
-                      {a.stats.trend !== null && (
-                        <span style={{ color: a.stats.trend > 0 ? "var(--accent)" : a.stats.trend < 0 ? "var(--red)" : "var(--muted)" }}>
-                          {" "}· {a.stats.trend > 0 ? "ดีขึ้น ↑" : a.stats.trend < 0 ? "แย่ลง ↓" : "คงที่"}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
+            {attention.map((a, i) => (
+              <button
+                key={a.ind.id}
+                type="button"
+                className="kpi-row"
+                onClick={() => { setFocus(null); setOpen(a.ind.id); }}
+                style={{
+                  display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap",
+                  width: "100%", textAlign: "left", padding: "8px 13px", border: "none",
+                  borderTop: i === 0 ? "none" : "1px solid var(--line)",
+                  background: "transparent", cursor: "pointer",
+                }}
+              >
+                <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--accent)", flex: "0 0 auto" }}>{a.ind.code}</span>
+                <span style={{ fontSize: 13.5, color: "var(--text)", flex: "1 1 220px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {a.ind.name}
+                </span>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 13, color: "var(--red)", flex: "0 0 auto" }}>
+                  {a.stats.latest ? formatValue(a.stats.latest.value, a.ind.kind) : "—"}
+                </span>
+                <span style={{ fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--muted)", flex: "0 0 auto" }}>
+                  เป้า {a.ind.targetRaw || "—"}
+                  {a.gap !== null && a.gap > 0 && <> · ห่าง {formatValue(a.gap, a.ind.kind)}</>}
+                </span>
+              </button>
+            ))}
           </div>
-
-          {attention.length > 8 && (
-            <button type="button" onClick={() => setShowAllAttention((v) => !v)}
-              style={{ marginTop: 10, fontFamily: "var(--mono)", fontSize: 12.5, color: "var(--accent)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>
-              {showAllAttention ? "ย่อกลับ" : `ดูอีก ${attention.length - 8} ตัว`}
-            </button>
-          )}
         </section>
       ) : (
-        <p style={{ marginTop: 26, fontSize: 14.5, color: "var(--sub)" }}>
-          ตัวชี้วัดที่มีข้อมูลผ่านเป้าครบทุกตัว
+        <p style={{ marginTop: 22, fontSize: 14, color: "var(--sub)" }}>
+          เดือนล่าสุดผ่านเป้าทุกตัวชี้วัดที่มีข้อมูล
         </p>
       )}
 

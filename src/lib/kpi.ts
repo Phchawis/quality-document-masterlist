@@ -165,9 +165,11 @@ export type Attention = {
   severity: number;
 };
 
-/* รายการที่ควรดูแลก่อน — เอาเฉพาะตัวที่ยังไม่ผ่านครบทุกเดือน
-   เรียงจากห่างเป้ามากที่สุด เพราะจากตัวชี้วัด 105 ตัว มีไม่ถึง 10% ที่ต้องลงมือทำ
-   ถ้าไม่ดึงขึ้นมาไว้บนสุด ผู้ใช้ต้องเลื่อนผ่านแถวที่ผ่านเป้าเป็นร้อยแถวเพื่อหามัน */
+/* รายการที่ควรดูแลก่อน — เอาเฉพาะตัวที่ "เดือนล่าสุดยังไม่ถึงเป้า" เท่านั้น
+
+   เคยเอาตัวที่ผ่านบางเดือนมารวมด้วย ได้ 23 รายการ ซึ่งส่วนใหญ่คือผ่าน 9 ใน 10 เดือน
+   ไม่ได้เร่งด่วนอะไร กลายเป็นรกจนกลบตัวที่ต้องแก้จริง — เกณฑ์นี้เหลือราว 10 รายการ
+   และทุกตัวคือสิ่งที่ยังเป็นปัญหาอยู่ ณ ตอนนี้จริง ๆ */
 export function attentionList(
   works: { name: string; indicators: Indicator[] }[],
 ): Attention[] {
@@ -175,13 +177,11 @@ export function attentionList(
   for (const w of works) {
     for (const ind of w.indicators) {
       const stats = statsFor(ind);
-      if (stats.rate === null || stats.rate === 1) continue;
+      if (!stats.latest || ind.targetValue === null) continue;
+      if (meetsTarget(stats.latest.value, { op: ind.targetOp, value: ind.targetValue }) !== false) continue;
       const gap = gapFromTarget(ind);
-      const denom = Math.max(Math.abs(ind.targetValue ?? 0), 1);
-      // ตัวที่ยังไม่ถึงเป้าเรียงตามสัดส่วนที่ขาด · ตัวที่ค่าล่าสุดผ่านแล้วแต่เคยตก
-      // ให้ความสำคัญน้อยกว่า แต่ยังต้องอยู่ในรายการ
-      const severity = gap !== null && gap > 0 ? gap / denom : (1 - stats.rate) * 0.5;
-      out.push({ ind, workName: w.name, stats, gap, severity });
+      const denom = Math.max(Math.abs(ind.targetValue), 1);
+      out.push({ ind, workName: w.name, stats, gap, severity: (gap ?? 0) / denom });
     }
   }
   return out.sort((a, b) => b.severity - a.severity);
