@@ -104,6 +104,47 @@ export function statsFor(ind: Indicator): IndicatorStats {
   };
 }
 
+/** ใครแก้ตัวเลขของงานไหนได้บ้าง
+ *  หัวหน้างาน/ผู้ดูแลระบบ = ทุกงาน · หัวหน้าหมวดงาน = เฉพาะงานที่ตัวเองสังกัด
+ *  จำกัดให้แคบไว้เพราะตัวเลขชุดนี้ใช้รายงานผู้บริหารและใช้ตอนตรวจประเมิน
+ *  อยู่ที่นี่ไม่ใช่ในไฟล์ actions เพราะไฟล์ "use server" export ได้เฉพาะ async */
+export function canEditWork(
+  user: { role: string; workId: string | null } | null | undefined,
+  workId: string,
+): boolean {
+  if (!user) return false;
+  if (user.role === "SYSADMIN" || user.role === "HEAD_WORK") return true;
+  if (user.role === "HEAD_CAT") return user.workId === workId;
+  return false;
+}
+
+/* ตรวจค่าที่ผู้ใช้พิมพ์ในหน้ากรอก — คืนข้อความเตือน หรือ null ถ้าไม่มีปัญหา
+
+   ปัญหาที่เคยเกิดจริง: ร้อยละถูกกรอกเป็นเศษส่วน (0.9906 แทน 99.06) ทำให้ตัวเลข
+   ผิดไป 100 เท่าโดยไม่มีใครสังเกต กว่าจะรู้ก็ตอนเอาไปทำกราฟรวมข้ามงาน
+   จึงดักตั้งแต่ตอนพิมพ์ แทนที่จะไปไล่แก้ทีหลัง */
+export function entryWarning(
+  ind: { kind: KpiKind; targetValue: number | null },
+  raw: string,
+): string | null {
+  if (raw.trim() === "") return null;
+  const v = Number(raw);
+  if (!Number.isFinite(v)) return "ไม่ใช่ตัวเลข";
+  if (v < 0) return "ค่าติดลบไม่ได้";
+  if (ind.kind !== "PERCENT") return null;
+  if (v > 100) return "ร้อยละเกิน 100 ไม่ได้";
+  // เป้าหมายอยู่หลักสิบขึ้นไปแต่กรอกไม่ถึง 1 — เกือบแน่ว่ากรอกเป็นเศษส่วน
+  if (v > 0 && v < 1 && (ind.targetValue ?? 0) >= 10) {
+    return `หมายถึง ${(v * 100).toFixed(2)}% หรือเปล่า? ช่องนี้กรอกเป็นร้อยละ (0–100)`;
+  }
+  return null;
+}
+
+/** เตือนแบบนี้ห้ามบันทึก (ต่างจากเตือนให้ทบทวนซึ่งบันทึกได้) */
+export function isBlockingWarning(w: string | null): boolean {
+  return w === "ไม่ใช่ตัวเลข" || w === "ค่าติดลบไม่ได้" || w === "ร้อยละเกิน 100 ไม่ได้";
+}
+
 /** สรุประดับงาน: ตัวชี้วัดกี่ตัวที่ "ผ่านทุกเดือนที่มีข้อมูล" */
 export function summarise(indicators: Indicator[]) {
   let pass = 0;

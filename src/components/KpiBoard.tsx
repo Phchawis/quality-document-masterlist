@@ -118,8 +118,8 @@ function Sparkline({ ind }: { ind: Indicator }) {
 }
 
 export default function KpiBoard({
-  year, years, works,
-}: { year: number; years: number[]; works: WorkBlock[] }) {
+  year, years, works, canEnter,
+}: { year: number; years: number[]; works: WorkBlock[]; canEnter: boolean }) {
   const router = useRouter();
   const [focus, setFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -155,6 +155,12 @@ export default function KpiBoard({
             </p>
           </div>
 
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          {canEnter && (
+            <a href="/kpi/entry" style={{ fontFamily: "var(--display)", fontWeight: 600, fontSize: 14, padding: "9px 16px", borderRadius: 2, background: "var(--accent)", color: "var(--accent-ink)", whiteSpace: "nowrap" }}>
+              กรอกผลรายเดือน
+            </a>
+          )}
           {years.length > 1 && (
             <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "var(--muted)" }}>
               ปีงบประมาณ
@@ -167,6 +173,7 @@ export default function KpiBoard({
               </select>
             </label>
           )}
+          </div>
         </div>
 
         {/* ตัวเลขสรุประดับฝ่าย — วางเป็นแถวเดียว ไม่ทำเป็นการ์ดใหญ่ เพราะเป็นบริบท ไม่ใช่พระเอกของหน้า */}
