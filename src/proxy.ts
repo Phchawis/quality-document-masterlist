@@ -30,6 +30,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on everything except Next internals, API auth routes, and static assets.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/files|assets|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
+  /* Run on everything except Next internals, API auth routes, and static assets.
+     api/kpi ต้องยกเว้นด้วย เพราะเป็น API ที่ระบบ Lab QMS เรียกแบบเซิร์ฟเวอร์ถึง
+     เซิร์ฟเวอร์ ไม่มีคุกกี้เซสชัน — มีการตรวจกุญแจของตัวเองอยู่แล้วใน route
+     ถ้าไม่ยกเว้น middleware จะ redirect ไปหน้า login แล้วคืน HTML แทน JSON */
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/files|api/kpi|assets|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
 };
