@@ -54,7 +54,7 @@ export default function Header({ userName, roleTh, showUsers, showAudit, ackPend
 
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 40, background: "var(--headbg)", backdropFilter: "blur(14px)", borderBottom: "1px solid var(--line2)" }}>
-      <div style={{ maxWidth: 1360, margin: "0 auto", padding: "12px clamp(16px,3vw,32px)", display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+      <div style={{ maxWidth: "var(--page-max)", margin: "0 auto", padding: "12px clamp(16px,3vw,32px)", display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }} aria-label="หน้าหลัก">
           <Image src="/assets/seal-tuh.png" alt="" width={36} height={36} style={{ borderRadius: "50%", background: "#fff", padding: 2, flex: "0 0 auto" }} />
           <span style={{ textAlign: "left", lineHeight: 1.25, minWidth: 0 }}>
